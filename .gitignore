@@ -1,0 +1,7 @@
+node_modules/
+.next/
+.env.local
+.env
+nutrition.db
+nutrition.db-shm
+nutrition.db-wal
