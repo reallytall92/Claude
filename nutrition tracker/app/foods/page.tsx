@@ -299,38 +299,45 @@ function FoodForm({
         onChange={(e) => set("brand", e.target.value)}
       />
       <div className="grid grid-cols-3 gap-2">
-        <input
-          type="number" min="0.1" step="any"
-          className="min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
-          placeholder="Size"
-          value={form.serving_size}
-          onChange={(e) => set("serving_size", parseFloat(e.target.value))}
-        />
-        <input
-          className="min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
-          placeholder="Unit"
-          value={form.serving_unit}
-          onChange={(e) => set("serving_unit", e.target.value)}
-        />
-        <input
-          type="number" min="0" step="any"
-          className="min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
-          placeholder="Calories *"
-          value={form.calories}
-          onChange={(e) => set("calories", parseFloat(e.target.value))}
-          required
-        />
+        <div>
+          <label className="block text-xs font-medium text-zinc-500 mb-1">Serving size</label>
+          <input
+            type="number" min="0.1" step="any"
+            className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            value={form.serving_size}
+            onChange={(e) => set("serving_size", parseFloat(e.target.value))}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-zinc-500 mb-1">Unit</label>
+          <input
+            className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            value={form.serving_unit}
+            onChange={(e) => set("serving_unit", e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-zinc-500 mb-1">Calories</label>
+          <input
+            type="number" min="0" step="any"
+            className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            value={form.calories}
+            onChange={(e) => set("calories", parseFloat(e.target.value))}
+            required
+          />
+        </div>
       </div>
       <div className="grid grid-cols-3 gap-2">
         {(["protein", "carbs", "fat"] as const).map((m) => (
-          <input
-            key={m}
-            type="number" min="0" step="any"
-            className="min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
-            placeholder={`${m.charAt(0).toUpperCase() + m.slice(1)} g`}
-            value={form[m]}
-            onChange={(e) => set(m, parseFloat(e.target.value) || 0)}
-          />
+          <div key={m}>
+            <label className="block text-xs font-medium text-zinc-500 mb-1">{m.charAt(0).toUpperCase() + m.slice(1)} (g)</label>
+            <input
+              type="number" min="0" step="any"
+              className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+              value={form[m]}
+              onChange={(e) => set(m, parseFloat(e.target.value) || 0)}
+            />
+          </div>
         ))}
       </div>
       <div className="flex gap-2 justify-end">
