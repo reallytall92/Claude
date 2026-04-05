@@ -176,6 +176,7 @@ export default function DashboardPage() {
         <QuickAddDrawer
           open={!!drawerMeal}
           meal={drawerMeal}
+          date={date}
           onClose={() => setDrawerMeal(null)}
           onAdded={handleAdded}
         />

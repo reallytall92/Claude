@@ -18,6 +18,10 @@ function isGramLike(unit: string): boolean {
   return ["g", "gram", "grams"].includes(unit.toLowerCase());
 }
 
+function normalizeUnit(u: string): string {
+  return u.toLowerCase().replace(/s$/, "");
+}
+
 function formatAmount(n: number): string {
   if (Number.isInteger(n)) return String(n);
   return String(Math.round(n * 10) / 10);
@@ -50,13 +54,18 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
   const defaultUnit = food.default_unit;
   const initialUnitMode: UnitMode = (() => {
     if (!defaultUnit || food.default_servings == null) return "servings";
-    if (defaultUnit === "serving") return "servings";
-    if (["g", "gram", "grams"].includes(defaultUnit.toLowerCase())) return "grams";
-    if (defaultUnit === food.serving_unit) return "unit";
+    const norm = normalizeUnit(defaultUnit);
+    if (norm === "serving") return "servings";
+    if (isGramLike(defaultUnit)) return "grams";
+    // Match against the food's native unit (handles plural/case differences like "piece" vs "pieces")
+    if (normalizeUnit(food.serving_unit) === norm) return "unit";
+    // Default unit is a different unit entirely — convert amount to servings
     return "servings";
   })();
 
-  const initialAmount = food.default_servings != null && food.default_servings > 0 ? food.default_servings : 1;
+  // Only use default amount if the unit mode was actually resolved (not a fallback)
+  const defaultResolved = defaultUnit != null && initialUnitMode !== "servings" || (defaultUnit != null && normalizeUnit(defaultUnit) === "serving");
+  const initialAmount = defaultResolved && food.default_servings != null && food.default_servings > 0 ? food.default_servings : 1;
   const [unitMode, setUnitMode] = useState<UnitMode>(initialUnitMode);
   const [amount, setAmount] = useState(initialAmount);
   const [inputValue, setInputValue] = useState(formatAmount(initialAmount));

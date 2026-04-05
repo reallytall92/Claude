@@ -10,6 +10,7 @@ import { FavoriteFoods } from "./FavoriteFoods";
 interface QuickAddDrawerProps {
   open: boolean;
   meal: string;
+  date?: string;
   onClose: () => void;
   onAdded: (entry: object) => void;
 }
@@ -21,7 +22,7 @@ const MEAL_LABELS: Record<string, string> = {
   snack: "Snacks",
 };
 
-export function QuickAddDrawer({ open, meal, onClose, onAdded }: QuickAddDrawerProps) {
+export function QuickAddDrawer({ open, meal, date, onClose, onAdded }: QuickAddDrawerProps) {
   const [selectedFood, setSelectedFood] = useState<SearchResult | null>(null);
   const [logging, setLogging] = useState(false);
 
@@ -36,6 +37,7 @@ export function QuickAddDrawer({ open, meal, onClose, onAdded }: QuickAddDrawerP
 
     const body = {
       meal,
+      date,
       servings,
       calories: Math.round(food.calories * ratio * 10) / 10,
       protein: Math.round(food.protein * ratio * 10) / 10,
