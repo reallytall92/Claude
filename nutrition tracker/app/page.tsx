@@ -69,6 +69,18 @@ export default function DashboardPage() {
   const [entries, setEntries] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerMeal, setDrawerMeal] = useState<string | null>(null);
+  const [goals, setGoals] = useState<{ calories: number; protein: number; carbs: number; fat: number } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((s) => setGoals({
+        calories: Number(s.calorie_goal),
+        protein: Number(s.protein_goal),
+        carbs: Number(s.carbs_goal),
+        fat: Number(s.fat_goal),
+      }));
+  }, []);
 
   const fetchEntries = useCallback(async (d: string) => {
     setLoading(true);
@@ -133,7 +145,7 @@ export default function DashboardPage() {
         </>
       ) : (
         <>
-          <MacroSummary macros={totalMacros} />
+          <MacroSummary macros={totalMacros} goals={goals ?? undefined} />
 
           <div className="space-y-3">
             {MEALS.map((meal, i) => (

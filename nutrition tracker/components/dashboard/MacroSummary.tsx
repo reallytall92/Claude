@@ -10,8 +10,12 @@ interface Macros {
   fat: number;
 }
 
-const CALORIE_GOAL = 2000;
-const MACRO_GOALS = { protein: 150, carbs: 250, fat: 65 };
+interface Goals {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
 
 const MACRO_CONFIG = [
   { key: "protein" as const, label: "Protein", color: "#3b82f6", glowColor: "rgba(59,130,246,0.15)" },
@@ -202,7 +206,13 @@ function MacroRing({
 }
 
 /* ─── Main component ─── */
-export function MacroSummary({ macros }: { macros: Macros }) {
+export function MacroSummary({ macros, goals }: { macros: Macros; goals?: Goals }) {
+  const CALORIE_GOAL = goals?.calories ?? 2000;
+  const MACRO_GOALS = {
+    protein: goals?.protein ?? 150,
+    carbs: goals?.carbs ?? 250,
+    fat: goals?.fat ?? 65,
+  };
   const remaining = Math.max(0, CALORIE_GOAL - macros.calories);
   const calorieProgress = CALORIE_GOAL > 0 ? macros.calories / CALORIE_GOAL : 0;
   const isOver = macros.calories > CALORIE_GOAL;

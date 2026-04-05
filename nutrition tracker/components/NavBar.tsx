@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, History, BookOpen } from "lucide-react";
+import { LayoutDashboard, History, BookOpen, Settings } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +9,7 @@ const NAV = [
   { href: "/", label: "Today", icon: LayoutDashboard },
   { href: "/history", label: "History", icon: History },
   { href: "/foods", label: "Foods", icon: BookOpen },
+  { href: "/settings", label: "Targets", icon: Settings },
 ];
 
 export function NavBar() {

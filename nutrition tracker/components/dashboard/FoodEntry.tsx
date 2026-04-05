@@ -28,9 +28,10 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
 
   const foodName = entry.food?.name ?? "Unknown food";
   const brand = entry.food?.brand;
+  const fmtNum = (n: number) => Number.isInteger(n) ? String(n) : n.toFixed(1);
   const servingDesc = entry.food
-    ? `${entry.servings} × ${entry.food.serving_size}${entry.food.serving_unit}`
-    : `${entry.servings} serving${entry.servings !== 1 ? "s" : ""}`;
+    ? `${fmtNum(entry.servings)} × ${fmtNum(entry.food.serving_size)}${entry.food.serving_unit}`
+    : `${fmtNum(entry.servings)} serving${entry.servings !== 1 ? "s" : ""}`;
 
   function handleSave() {
     const val = parseFloat(servings);

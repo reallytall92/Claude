@@ -54,4 +54,12 @@ export async function runMigrations() {
   } catch {
     // Column already exists — ignore
   }
+
+  // User settings table for targets
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS user_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `);
 }
