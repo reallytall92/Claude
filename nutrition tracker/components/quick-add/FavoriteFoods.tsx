@@ -43,7 +43,7 @@ export function FavoriteFoods({ onSelect }: FavoriteFoodsProps) {
   }
 
   return (
-    <div className="space-y-0.5 max-h-80 overflow-y-auto">
+    <div className="space-y-0.5">
       {favorites.map((food) => (
         <button
           key={food.id}
