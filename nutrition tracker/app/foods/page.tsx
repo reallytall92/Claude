@@ -310,11 +310,22 @@ function FoodForm({
         </div>
         <div>
           <label className="block text-xs font-medium text-zinc-500 mb-1">Unit</label>
-          <input
-            className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+          <select
+            className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
             value={form.serving_unit}
             onChange={(e) => set("serving_unit", e.target.value)}
-          />
+          >
+            <option value="serving">serving</option>
+            <option value="g">g</option>
+            <option value="oz">oz</option>
+            <option value="cup">cup</option>
+            <option value="Tbsp">Tbsp</option>
+            <option value="tsp">tsp</option>
+            <option value="ml">ml</option>
+            <option value="piece">piece</option>
+            <option value="slice">slice</option>
+            <option value="scoop">scoop</option>
+          </select>
         </div>
         <div>
           <label className="block text-xs font-medium text-zinc-500 mb-1">Calories</label>
