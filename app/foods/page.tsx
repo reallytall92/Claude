@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Star, Pencil, Trash2, Plus, Check, X } from "lucide-react";
+import { Star, Pencil, Trash2, Plus, Check, X, UtensilsCrossed } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 
 interface Food {
@@ -64,34 +65,60 @@ export default function FoodsPage() {
         </Button>
       </div>
 
-      {showAddForm && (
-        <AddFoodForm
-          onSaved={(food) => { setFoods((prev) => [food, ...prev]); setShowAddForm(false); }}
-          onCancel={() => setShowAddForm(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showAddForm && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <AddFoodForm
+              onSaved={(food) => { setFoods((prev) => [food, ...prev]); setShowAddForm(false); }}
+              onCancel={() => setShowAddForm(false)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="flex gap-1 bg-zinc-100 p-1 rounded-xl">
+      {/* Tab bar with animated indicator */}
+      <div className="relative flex gap-1 bg-zinc-100 p-1 rounded-xl">
         {(["all", "custom", "favorites"] as Tab[]).map((t) => (
           <button
             key={t}
-            className={`flex-1 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors ${
-              tab === t ? "bg-white shadow text-zinc-900" : "text-zinc-500"
+            className={`relative flex-1 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors z-10 ${
+              tab === t ? "text-zinc-900" : "text-zinc-500"
             }`}
             onClick={() => setTab(t)}
           >
-            {t}
+            {tab === t && (
+              <motion.div
+                layoutId="foods-tab-bg"
+                className="absolute inset-0 bg-white shadow rounded-lg"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10">{t}</span>
           </button>
         ))}
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-16 text-zinc-400 text-sm">
-          {tab === "favorites" ? "No favorites yet — star a food to save it here." : "No foods found."}
-        </div>
+        <motion.div
+          className="text-center py-16"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <UtensilsCrossed className="h-10 w-10 text-zinc-200 mx-auto mb-3" />
+          <p className="text-zinc-400 text-sm">
+            {tab === "favorites" ? "No favorites yet — star a food to save it here." : "No foods found."}
+          </p>
+        </motion.div>
       ) : (
         <div className="space-y-2">
-          {filtered.map((food) =>
+          {filtered.map((food, i) =>
             editingId === food.id ? (
               <EditFoodForm
                 key={food.id}
@@ -103,13 +130,19 @@ export default function FoodsPage() {
                 onCancel={() => setEditingId(null)}
               />
             ) : (
-              <FoodRow
+              <motion.div
                 key={food.id}
-                food={food}
-                onFavorite={toggleFavorite}
-                onEdit={() => setEditingId(food.id)}
-                onDelete={() => deleteFood(food.id)}
-              />
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.3), ease: [0.22, 1, 0.36, 1] }}
+              >
+                <FoodRow
+                  food={food}
+                  onFavorite={toggleFavorite}
+                  onEdit={() => setEditingId(food.id)}
+                  onDelete={() => deleteFood(food.id)}
+                />
+              </motion.div>
             )
           )}
         </div>
@@ -132,9 +165,11 @@ function FoodRow({
   return (
     <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm px-4 py-3 flex items-center gap-3">
       <button onClick={() => onFavorite(food)} className="shrink-0">
-        <Star
-          className={`h-4 w-4 ${food.is_favorite ? "text-amber-400 fill-amber-400" : "text-zinc-200 hover:text-amber-300"}`}
-        />
+        <motion.div whileTap={{ scale: 1.3 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
+          <Star
+            className={`h-4 w-4 transition-colors ${food.is_favorite ? "text-amber-400 fill-amber-400" : "text-zinc-200 hover:text-amber-300"}`}
+          />
+        </motion.div>
       </button>
 
       <div className="flex-1 min-w-0">
@@ -213,14 +248,14 @@ function FoodForm({
     <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-4 space-y-3">
       <div className="flex gap-2">
         <input
-          className="flex-1 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="flex-1 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
           placeholder="Food name *"
           value={form.name}
           onChange={(e) => set("name", e.target.value)}
           required
         />
         <input
-          className="w-32 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-32 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
           placeholder="Brand"
           value={form.brand}
           onChange={(e) => set("brand", e.target.value)}
@@ -229,20 +264,20 @@ function FoodForm({
       <div className="flex gap-2">
         <input
           type="number" min="0.1" step="any"
-          className="w-24 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-24 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
           placeholder="Size"
           value={form.serving_size}
           onChange={(e) => set("serving_size", parseFloat(e.target.value))}
         />
         <input
-          className="w-24 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="w-24 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
           placeholder="Unit"
           value={form.serving_unit}
           onChange={(e) => set("serving_unit", e.target.value)}
         />
         <input
           type="number" min="0" step="any"
-          className="flex-1 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          className="flex-1 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
           placeholder="Calories *"
           value={form.calories}
           onChange={(e) => set("calories", parseFloat(e.target.value))}
@@ -254,7 +289,7 @@ function FoodForm({
           <input
             key={m}
             type="number" min="0" step="any"
-            className="flex-1 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="flex-1 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
             placeholder={`${m.charAt(0).toUpperCase() + m.slice(1)} g`}
             value={form[m]}
             onChange={(e) => set(m, parseFloat(e.target.value) || 0)}

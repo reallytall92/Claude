@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, History, BookOpen } from "lucide-react";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -12,14 +13,15 @@ const NAV = [
 
 export function NavBar() {
   const pathname = usePathname();
+  const activeIndex = NAV.findIndex(({ href }) => pathname === href);
 
   return (
     <nav
       className="glass-bar fixed bottom-0 left-0 right-0 z-50"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <div className="max-w-2xl mx-auto flex items-stretch h-[60px]">
-        {NAV.map(({ href, label, icon: Icon }) => {
+      <div className="max-w-2xl mx-auto flex items-stretch h-[60px] relative">
+        {NAV.map(({ href, label, icon: Icon }, i) => {
           const active = pathname === href;
           return (
             <Link
@@ -31,17 +33,26 @@ export function NavBar() {
               )}
             >
               {active && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-emerald-500 rounded-full" />
+                <motion.span
+                  layoutId="nav-indicator"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-emerald-500 rounded-full"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
               )}
-              <Icon
-                className={cn(
-                  "h-[22px] w-[22px] transition-all duration-200",
-                  active ? "stroke-[2.2px]" : "stroke-[1.8px]"
-                )}
-              />
+              <motion.div
+                animate={{ scale: active ? 1 : 0.92 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              >
+                <Icon
+                  className={cn(
+                    "h-[22px] w-[22px] transition-colors duration-200",
+                    active ? "stroke-[2.2px]" : "stroke-[1.8px]"
+                  )}
+                />
+              </motion.div>
               <span
                 className={cn(
-                  "text-[10px] font-semibold tracking-wide transition-colors",
+                  "text-[10px] font-semibold tracking-wide transition-colors duration-200",
                   active ? "text-emerald-600" : "text-zinc-400"
                 )}
               >

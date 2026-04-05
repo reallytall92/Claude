@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Pencil, Trash2, Check, X } from "lucide-react";
+import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 
 interface LogEntryWithFood {
@@ -40,7 +41,14 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
   }
 
   return (
-    <div className="flex items-center gap-3 py-3 px-1">
+    <motion.div
+      layout
+      className="flex items-center gap-3 py-3 px-1"
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 8, transition: { duration: 0.15 } }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+    >
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-zinc-800 text-sm truncate">{foodName}</div>
         <div className="text-xs text-zinc-500 mt-0.5">
@@ -48,7 +56,7 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
           {editing ? (
             <span className="inline-flex items-center gap-1">
               <input
-                className="w-14 border border-zinc-300 rounded-lg px-1.5 py-0.5 text-xs"
+                className="w-14 border border-zinc-300 rounded-lg px-1.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 value={servings}
                 onChange={(e) => setServings(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSave()}
@@ -69,7 +77,6 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
         </div>
       </div>
 
-      {/* Actions — always visible (not hover-only) for touch accessibility */}
       <div className="flex gap-0.5 shrink-0">
         {editing ? (
           <>
@@ -96,6 +103,6 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
           </>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

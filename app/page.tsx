@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { DayHeader } from "@/components/dashboard/DayHeader";
 import { MacroSummary } from "@/components/dashboard/MacroSummary";
 import { MealSection } from "@/components/dashboard/MealSection";
@@ -7,7 +8,7 @@ import { QuickAddDrawer } from "@/components/quick-add/QuickAddDrawer";
 import { todayStr } from "@/lib/utils";
 
 const MEALS = ["breakfast", "lunch", "dinner", "snack"] as const;
-type Meal = typeof MEALS[number];
+type Meal = (typeof MEALS)[number];
 
 interface LogEntry {
   id: number;
@@ -27,6 +28,42 @@ function stepDate(dateStr: string, days: number): string {
   return d.toISOString().split("T")[0];
 }
 
+/* ─── Skeleton placeholders ─── */
+function MacroSummarySkeleton() {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-zinc-100/80 p-5">
+      <div className="flex items-center gap-5">
+        <div className="skeleton shrink-0" style={{ width: 128, height: 128, borderRadius: "50%" }} />
+        <div className="flex-1 flex flex-col gap-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="skeleton" style={{ width: 52, height: 52, borderRadius: "50%" }} />
+              <div className="flex-1">
+                <div className="skeleton h-2.5 w-16 mb-1.5" />
+                <div className="skeleton h-3.5 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MealSectionSkeleton() {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4">
+        <div className="flex items-center gap-2">
+          <div className="skeleton h-4 w-4 rounded" />
+          <div className="skeleton h-4 w-20" />
+        </div>
+        <div className="skeleton h-4 w-14" />
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [date, setDate] = useState(todayStr());
   const [entries, setEntries] = useState<LogEntry[]>([]);
@@ -44,7 +81,9 @@ export default function DashboardPage() {
     }
   }, []);
 
-  useEffect(() => { fetchEntries(date); }, [date, fetchEntries]);
+  useEffect(() => {
+    fetchEntries(date);
+  }, [date, fetchEntries]);
 
   const totalMacros = entries.reduce(
     (acc, e) => ({
@@ -83,23 +122,42 @@ export default function DashboardPage() {
         onNext={() => setDate((d) => stepDate(d, 1))}
       />
 
-      <MacroSummary macros={totalMacros} />
-
       {loading ? (
-        <div className="text-center py-12 text-zinc-400 text-sm">Loading...</div>
+        <>
+          <MacroSummarySkeleton />
+          <div className="space-y-3">
+            {MEALS.map((_, i) => (
+              <MealSectionSkeleton key={i} />
+            ))}
+          </div>
+        </>
       ) : (
-        <div className="space-y-3">
-          {MEALS.map((meal) => (
-            <MealSection
-              key={meal}
-              meal={meal}
-              entries={entries.filter((e) => e.meal === meal)}
-              onAddFood={(m) => setDrawerMeal(m)}
-              onDeleteEntry={handleDelete}
-              onUpdateEntry={handleUpdate}
-            />
-          ))}
-        </div>
+        <>
+          <MacroSummary macros={totalMacros} />
+
+          <div className="space-y-3">
+            {MEALS.map((meal, i) => (
+              <motion.div
+                key={meal}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.35,
+                  delay: 0.08 + i * 0.06,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+              >
+                <MealSection
+                  meal={meal}
+                  entries={entries.filter((e) => e.meal === meal)}
+                  onAddFood={(m) => setDrawerMeal(m)}
+                  onDeleteEntry={handleDelete}
+                  onUpdateEntry={handleUpdate}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </>
       )}
 
       {drawerMeal && (

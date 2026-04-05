@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import { useMotionValue, useTransform, animate, motion } from "motion/react";
+
 interface Macros {
   calories: number;
   protein: number;
@@ -7,65 +10,259 @@ interface Macros {
   fat: number;
 }
 
-export function MacroSummary({ macros }: { macros: Macros }) {
-  const totalMacroG = macros.protein + macros.carbs + macros.fat;
-  const proteinPct = totalMacroG > 0 ? (macros.protein / totalMacroG) * 100 : 33;
-  const carbsPct = totalMacroG > 0 ? (macros.carbs / totalMacroG) * 100 : 34;
-  const fatPct = totalMacroG > 0 ? (macros.fat / totalMacroG) * 100 : 33;
+const CALORIE_GOAL = 2000;
+const MACRO_GOALS = { protein: 150, carbs: 250, fat: 65 };
+
+const MACRO_CONFIG = [
+  { key: "protein" as const, label: "Protein", color: "#3b82f6", glowColor: "rgba(59,130,246,0.15)" },
+  { key: "carbs" as const, label: "Carbs", color: "#f59e0b", glowColor: "rgba(245,158,11,0.15)" },
+  { key: "fat" as const, label: "Fat", color: "#f43f5e", glowColor: "rgba(244,63,94,0.15)" },
+];
+
+/* ─── Animated number counter ─── */
+function AnimatedNumber({
+  value,
+  className,
+  decimals = 0,
+}: {
+  value: number;
+  className?: string;
+  decimals?: number;
+}) {
+  const mv = useMotionValue(0);
+  const display = useTransform(mv, (v) =>
+    decimals > 0 ? v.toFixed(decimals) : Math.round(v).toLocaleString()
+  );
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    const ctrl = animate(mv, value, {
+      duration: 1,
+      ease: [0.22, 1, 0.36, 1],
+    });
+    return () => ctrl.stop();
+  }, [value, mv]);
+
+  useEffect(() => {
+    const unsub = display.on("change", (v) => {
+      if (ref.current) ref.current.textContent = v;
+    });
+    return unsub;
+  }, [display]);
+
+  return <span ref={ref} className={className}>0</span>;
+}
+
+/* ─── SVG progress ring ─── */
+function ProgressRing({
+  size,
+  strokeWidth,
+  progress,
+  color,
+  gradientId,
+  delay = 0,
+  glowColor,
+  children,
+}: {
+  size: number;
+  strokeWidth: number;
+  progress: number; // 0-1
+  color: string;
+  gradientId: string;
+  delay?: number;
+  glowColor?: string;
+  children?: React.ReactNode;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clampedProgress = Math.min(progress, 1);
+  const offset = circumference * (1 - clampedProgress);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 p-4">
-      {/* Top row: calories large, macros alongside */}
-      <div className="flex items-center gap-3">
-        <div className="text-center min-w-[80px]">
-          <div className="text-3xl font-bold text-zinc-900 leading-none">
-            {Math.round(macros.calories)}
-          </div>
-          <div className="text-[10px] text-zinc-400 mt-1 font-semibold uppercase tracking-widest">
-            kcal
-          </div>
-        </div>
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        className="block"
+        style={{ transform: "rotate(-90deg)" }}
+      >
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={color} stopOpacity={0.85} />
+            <stop offset="100%" stopColor={color} stopOpacity={1} />
+          </linearGradient>
+          {glowColor && (
+            <filter id={`${gradientId}-glow`}>
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          )}
+        </defs>
 
-        <div className="w-px h-10 bg-zinc-100 shrink-0" />
+        {/* Track */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="#f1f5f9"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+        />
 
-        <div className="flex-1 grid grid-cols-3 gap-1">
-          <MacroItem label="Protein" value={macros.protein} color="text-blue-600" />
-          <MacroItem label="Carbs" value={macros.carbs} color="text-amber-600" />
-          <MacroItem label="Fat" value={macros.fat} color="text-rose-600" />
-        </div>
-      </div>
+        {/* Progress */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={`url(#${gradientId})`}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          className="ring-animated"
+          filter={glowColor ? `url(#${gradientId}-glow)` : undefined}
+          style={{
+            "--ring-circumference": circumference,
+            "--ring-offset": offset,
+            animationDelay: `${delay}ms`,
+            strokeDashoffset: circumference,
+          } as React.CSSProperties}
+        />
+      </svg>
 
-      {/* Macro distribution bar */}
-      {totalMacroG > 0 && (
-        <div className="mt-3 flex rounded-full overflow-hidden h-1.5 gap-0.5">
-          <div
-            className="bg-blue-400 rounded-full transition-all duration-500"
-            style={{ width: `${proteinPct}%` }}
-          />
-          <div
-            className="bg-amber-400 rounded-full transition-all duration-500"
-            style={{ width: `${carbsPct}%` }}
-          />
-          <div
-            className="bg-rose-400 rounded-full transition-all duration-500"
-            style={{ width: `${fatPct}%` }}
-          />
+      {/* Center content */}
+      {children && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {children}
         </div>
       )}
     </div>
   );
 }
 
-function MacroItem({ label, value, color }: { label: string; value: number; color: string }) {
+/* ─── Macro mini ring with label ─── */
+function MacroRing({
+  label,
+  value,
+  goal,
+  color,
+  glowColor,
+  delay,
+}: {
+  label: string;
+  value: number;
+  goal: number;
+  color: string;
+  glowColor: string;
+  delay: number;
+}) {
+  const progress = goal > 0 ? value / goal : 0;
+
   return (
-    <div className="text-center">
-      <div className={`text-base font-bold ${color} leading-none`}>
-        {Math.round(value * 10) / 10}
-        <span className="text-[10px] font-normal ml-px">g</span>
+    <motion.div
+      className="flex items-center gap-3"
+      initial={{ opacity: 0, x: 12 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5, delay: delay / 1000, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <ProgressRing
+        size={52}
+        strokeWidth={5}
+        progress={progress}
+        color={color}
+        gradientId={`macro-${label.toLowerCase()}`}
+        delay={delay}
+        glowColor={glowColor}
+      >
+        <AnimatedNumber
+          value={Math.round(value)}
+          className="text-[11px] font-bold text-zinc-800 leading-none"
+        />
+      </ProgressRing>
+
+      <div className="min-w-0">
+        <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider leading-none">
+          {label}
+        </div>
+        <div className="mt-0.5 flex items-baseline gap-1">
+          <span className="text-sm font-bold leading-none" style={{ color }}>
+            <AnimatedNumber value={Math.round(value)} />
+            <span className="text-[10px] font-semibold">g</span>
+          </span>
+          <span className="text-[10px] text-zinc-300 font-medium">/ {goal}g</span>
+        </div>
       </div>
-      <div className="text-[10px] text-zinc-400 mt-0.5 font-semibold uppercase tracking-wider">
-        {label}
+    </motion.div>
+  );
+}
+
+/* ─── Main component ─── */
+export function MacroSummary({ macros }: { macros: Macros }) {
+  const remaining = Math.max(0, CALORIE_GOAL - macros.calories);
+  const calorieProgress = CALORIE_GOAL > 0 ? macros.calories / CALORIE_GOAL : 0;
+  const isOver = macros.calories > CALORIE_GOAL;
+
+  return (
+    <motion.div
+      className="bg-white rounded-2xl shadow-sm border border-zinc-100/80 p-5"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="flex items-center gap-5">
+        {/* Calorie ring — left */}
+        <div className="shrink-0">
+          <ProgressRing
+            size={128}
+            strokeWidth={10}
+            progress={calorieProgress}
+            color={isOver ? "#f43f5e" : "#10b981"}
+            gradientId="calorie-ring"
+            glowColor={isOver ? "rgba(244,63,94,0.12)" : "rgba(16,185,129,0.12)"}
+          >
+            <AnimatedNumber
+              value={Math.round(macros.calories)}
+              className="text-[26px] font-extrabold text-zinc-900 leading-none tracking-tight"
+            />
+            <span className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest mt-1">
+              kcal
+            </span>
+          </ProgressRing>
+
+          {/* Remaining label */}
+          <div className="text-center mt-1.5">
+            <span className="text-[10px] font-semibold text-zinc-400">
+              {isOver ? (
+                <span className="text-rose-500">
+                  +{Math.round(macros.calories - CALORIE_GOAL)} over
+                </span>
+              ) : (
+                <>{Math.round(remaining)} remaining</>
+              )}
+            </span>
+          </div>
+        </div>
+
+        {/* Macro rings — right */}
+        <div className="flex-1 flex flex-col gap-3 min-w-0">
+          {MACRO_CONFIG.map((m, i) => (
+            <MacroRing
+              key={m.key}
+              label={m.label}
+              value={macros[m.key]}
+              goal={MACRO_GOALS[m.key]}
+              color={m.color}
+              glowColor={m.glowColor}
+              delay={200 + i * 120}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

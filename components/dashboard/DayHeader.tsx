@@ -1,5 +1,7 @@
 "use client";
+import { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 
 interface DayHeaderProps {
@@ -25,17 +27,39 @@ export function DayHeader({ date, onPrev, onNext }: DayHeaderProps) {
   const today = new Date().toISOString().split("T")[0];
   const isToday = date === today;
   const { label, sub } = formatDisplayDate(date);
+  const directionRef = useRef(1);
+
+  function handlePrev() {
+    directionRef.current = -1;
+    onPrev();
+  }
+
+  function handleNext() {
+    directionRef.current = 1;
+    onNext();
+  }
 
   return (
     <div className="flex items-center justify-between py-1">
-      <Button variant="ghost" size="icon" onClick={onPrev} className="h-10 w-10 rounded-xl">
+      <Button variant="ghost" size="icon" onClick={handlePrev} className="h-10 w-10 rounded-xl">
         <ChevronLeft className="h-5 w-5" />
       </Button>
-      <div className="text-center">
-        <div className="font-bold text-zinc-900 text-base leading-tight">{label}</div>
-        <div className="text-xs text-zinc-400 font-medium mt-0.5">{sub}</div>
-      </div>
-      <Button variant="ghost" size="icon" onClick={onNext} disabled={isToday} className="h-10 w-10 rounded-xl">
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={date}
+          className="text-center"
+          initial={{ opacity: 0, x: directionRef.current * 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: directionRef.current * -24 }}
+          transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="font-bold text-zinc-900 text-base leading-tight">{label}</div>
+          <div className="text-xs text-zinc-400 font-medium mt-0.5">{sub}</div>
+        </motion.div>
+      </AnimatePresence>
+
+      <Button variant="ghost" size="icon" onClick={handleNext} disabled={isToday} className="h-10 w-10 rounded-xl">
         <ChevronRight className="h-5 w-5" />
       </Button>
     </div>
