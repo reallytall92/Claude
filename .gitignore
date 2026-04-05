@@ -1,9 +1,42 @@
+# OS
+.DS_Store
+
+# Dependencies
 node_modules/
+
+# Next.js
 .next/
-.env.local
+out/
+build/
+
+# Env files
 .env
-nutrition.db
-nutrition.db-shm
-nutrition.db-wal
-droplet-access.md
+.env.local
+.env*.local
+
+# Vercel
 .vercel
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Misc
+*.pem
+.claude/
+
+# Nutrition tracker
+nutrition tracker/nutrition.db
+nutrition tracker/nutrition.db-shm
+nutrition tracker/nutrition.db-wal
+nutrition tracker/droplet-access.md
+
+# Scorp-books
+scorp-books/data/
+scorp-books/screenshots/
