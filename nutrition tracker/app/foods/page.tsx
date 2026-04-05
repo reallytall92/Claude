@@ -305,6 +305,7 @@ function FoodForm({
             type="number" min="0.1" step="any"
             className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
             value={form.serving_size}
+            onFocus={(e) => e.target.select()}
             onChange={(e) => set("serving_size", parseFloat(e.target.value))}
           />
         </div>
@@ -333,6 +334,7 @@ function FoodForm({
             type="number" min="0" step="any"
             className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
             value={form.calories}
+            onFocus={(e) => e.target.select()}
             onChange={(e) => set("calories", parseFloat(e.target.value))}
             required
           />
@@ -346,6 +348,7 @@ function FoodForm({
               type="number" min="0" step="any"
               className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
               value={form[m]}
+              onFocus={(e) => e.target.select()}
               onChange={(e) => set(m, parseFloat(e.target.value) || 0)}
             />
           </div>
