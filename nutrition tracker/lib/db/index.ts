@@ -62,6 +62,13 @@ export async function runMigrations() {
     // Column already exists — ignore
   }
 
+  // Add default_unit column if missing
+  try {
+    await client.execute(`ALTER TABLE foods ADD COLUMN default_unit TEXT`);
+  } catch {
+    // Column already exists — ignore
+  }
+
   // User settings table for targets
   await client.execute(`
     CREATE TABLE IF NOT EXISTS user_settings (

@@ -16,6 +16,7 @@ export interface SearchResult {
   sugar?: number | null;
   serving_weight_grams?: number | null;
   default_servings?: number | null;
+  default_unit?: string | null;
   source?: string;
   external_id?: string;
   is_favorite?: number;

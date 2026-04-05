@@ -49,8 +49,18 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
     return modes;
   }, [food.serving_unit, food.serving_weight_grams, isGramUnit, isServingUnit, hasGramWeight]);
 
+  // Determine initial unit mode from saved default
+  const defaultUnit = food.default_unit;
+  const initialUnitMode: UnitMode = (() => {
+    if (!defaultUnit || food.default_servings == null) return "servings";
+    if (defaultUnit === "serving") return "servings";
+    if (["g", "gram", "grams"].includes(defaultUnit.toLowerCase())) return isGramUnit ? "servings" : "grams";
+    if (defaultUnit === food.serving_unit) return isGramUnit ? "servings" : "unit";
+    return "servings";
+  })();
+
   const initialAmount = food.default_servings != null && food.default_servings > 0 ? food.default_servings : 1;
-  const [unitMode, setUnitMode] = useState<UnitMode>("servings");
+  const [unitMode, setUnitMode] = useState<UnitMode>(initialUnitMode);
   const [amount, setAmount] = useState(initialAmount);
   const [inputValue, setInputValue] = useState(formatAmount(initialAmount));
 

@@ -17,6 +17,7 @@ interface Food {
   carbs: number;
   fat: number;
   default_servings?: number | null;
+  default_unit?: string | null;
   source?: string;
   is_favorite: number;
 }
@@ -181,7 +182,7 @@ function FoodRow({
           {food.brand && <span className="mr-1.5">{food.brand} ·</span>}
           {food.serving_size}{food.serving_unit}
           {food.default_servings != null && food.default_servings > 0 && (
-            <span className="text-emerald-500"> · default {Math.round(food.default_servings * food.serving_size * 10) / 10}{food.serving_unit}</span>
+            <span className="text-emerald-500"> · default {food.default_servings}{food.default_unit ?? food.serving_unit}</span>
           )}
           {" "}·{" "}
           <span className="font-medium text-zinc-600">{Math.round(food.calories)} cal</span>
@@ -229,9 +230,8 @@ function FoodForm({
     protein: food?.protein ?? 0,
     carbs: food?.carbs ?? 0,
     fat: food?.fat ?? 0,
-    default_servings: food?.default_servings != null && food.default_servings > 0
-      ? Math.round(food.default_servings * (food?.serving_size ?? 1) * 10) / 10
-      : "",
+    default_servings: food?.default_servings ?? "",
+    default_unit: food?.default_unit ?? food?.serving_unit ?? "serving",
   });
   const [saving, setSaving] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -248,6 +248,7 @@ function FoodForm({
       carbs: result.carbs,
       fat: result.fat,
       default_servings: "",
+      default_unit: result.serving_unit,
     });
     setScanning(false);
     setScanned(true);
@@ -267,7 +268,8 @@ function FoodForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
-        default_servings: form.default_servings === "" ? null : Number(form.default_servings) / form.serving_size,
+        default_servings: form.default_servings === "" ? null : Number(form.default_servings),
+        default_unit: form.default_servings === "" ? null : form.default_unit,
         source: "custom",
       }),
     });
@@ -369,16 +371,34 @@ function FoodForm({
       </div>
       <div>
         <label className="block text-xs font-medium text-zinc-500 mb-1">
-          Default amount ({form.serving_unit}) — optional
+          Default amount — optional
         </label>
-        <input
-          type="number" min="0" step="any"
-          className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
-          placeholder={`e.g. ${form.serving_size}`}
-          value={form.default_servings}
-          onFocus={(e) => e.target.select()}
-          onChange={(e) => set("default_servings", e.target.value === "" ? "" : parseFloat(e.target.value))}
-        />
+        <div className="flex gap-2">
+          <input
+            type="number" min="0" step="any"
+            className="flex-1 min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            placeholder="e.g. 250"
+            value={form.default_servings}
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => set("default_servings", e.target.value === "" ? "" : parseFloat(e.target.value))}
+          />
+          <select
+            className="min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            value={form.default_unit}
+            onChange={(e) => set("default_unit", e.target.value)}
+          >
+            <option value="serving">servings</option>
+            <option value="g">g</option>
+            <option value="oz">oz</option>
+            <option value="cup">cup</option>
+            <option value="Tbsp">Tbsp</option>
+            <option value="tsp">tsp</option>
+            <option value="ml">ml</option>
+            <option value="piece">piece</option>
+            <option value="slice">slice</option>
+            <option value="scoop">scoop</option>
+          </select>
+        </div>
         <p className="text-[11px] text-zinc-400 mt-1">Pre-fills this amount when logging. Leave blank for 1 serving.</p>
       </div>
       <div className="flex gap-2 justify-end">

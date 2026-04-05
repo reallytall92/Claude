@@ -14,7 +14,8 @@ export const foods = sqliteTable("foods", {
   fiber: real("fiber"),
   sugar: real("sugar"),
   serving_weight_grams: real("serving_weight_grams"), // gram weight per serving (for non-gram units)
-  default_servings: real("default_servings"), // user's usual amount (in servings)
+  default_servings: real("default_servings"), // user's usual amount (raw value in default_unit)
+  default_unit: text("default_unit"), // unit for default_servings: 'servings' | native unit | 'g'
   source: text("source"), // 'usda' | 'off' | 'custom' | 'scanned'
   external_id: text("external_id"), // USDA fdcId or OFF barcode
   is_favorite: integer("is_favorite").notNull().default(0),
