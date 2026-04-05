@@ -11,12 +11,18 @@ interface Goals {
   fat_goal: string;
 }
 
-const FIELDS = [
-  { key: "calorie_goal" as const, label: "Calories", unit: "kcal" },
-  { key: "protein_goal" as const, label: "Protein", unit: "g" },
-  { key: "carbs_goal" as const, label: "Carbs", unit: "g" },
-  { key: "fat_goal" as const, label: "Fat", unit: "g" },
+const MACRO_FIELDS = [
+  { key: "protein_goal" as const, label: "Protein", unit: "g", calPerGram: 4 },
+  { key: "carbs_goal" as const, label: "Carbs", unit: "g", calPerGram: 4 },
+  { key: "fat_goal" as const, label: "Fat", unit: "g", calPerGram: 9 },
 ];
+
+function calcCalories(goals: Goals): number {
+  const p = Number(goals.protein_goal) || 0;
+  const c = Number(goals.carbs_goal) || 0;
+  const f = Number(goals.fat_goal) || 0;
+  return p * 4 + c * 4 + f * 9;
+}
 
 export default function SettingsPage() {
   const [goals, setGoals] = useState<Goals | null>(null);
@@ -28,6 +34,13 @@ export default function SettingsPage() {
       .then((r) => r.json())
       .then(setGoals);
   }, []);
+
+  function updateMacro(key: string, value: string) {
+    if (!goals) return;
+    const updated = { ...goals, [key]: value };
+    updated.calorie_goal = String(calcCalories(updated));
+    setGoals(updated);
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -52,6 +65,8 @@ export default function SettingsPage() {
     );
   }
 
+  const calories = calcCalories(goals);
+
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold text-zinc-800">Daily Targets</h1>
@@ -64,13 +79,27 @@ export default function SettingsPage() {
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       >
         <p className="text-sm text-zinc-500">
-          Set your daily nutrition goals. These are used on the Today dashboard to track your progress.
+          Set your macro targets. Calories are calculated automatically.
         </p>
 
-        {FIELDS.map(({ key, label, unit }) => (
+        {/* Calorie display — computed */}
+        <div className="bg-zinc-50 rounded-xl px-4 py-3 flex items-center justify-between">
+          <div>
+            <div className="text-xs font-medium text-zinc-400">Calories (auto-calculated)</div>
+            <div className="text-2xl font-bold text-zinc-800">{calories.toLocaleString()}</div>
+          </div>
+          <div className="text-xs text-zinc-400 text-right leading-relaxed">
+            P {Number(goals.protein_goal) || 0}g × 4 = {(Number(goals.protein_goal) || 0) * 4}<br />
+            C {Number(goals.carbs_goal) || 0}g × 4 = {(Number(goals.carbs_goal) || 0) * 4}<br />
+            F {Number(goals.fat_goal) || 0}g × 9 = {(Number(goals.fat_goal) || 0) * 9}
+          </div>
+        </div>
+
+        {/* Macro inputs */}
+        {MACRO_FIELDS.map(({ key, label, unit, calPerGram }) => (
           <div key={key}>
             <label className="block text-xs font-medium text-zinc-500 mb-1">
-              {label} ({unit})
+              {label} ({unit}) — {calPerGram} cal/g
             </label>
             <input
               type="number"
@@ -79,7 +108,7 @@ export default function SettingsPage() {
               className="w-full border border-zinc-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
               value={goals[key]}
               onFocus={(e) => e.target.select()}
-              onChange={(e) => setGoals({ ...goals, [key]: e.target.value })}
+              onChange={(e) => updateMacro(key, e.target.value)}
               required
             />
           </div>
