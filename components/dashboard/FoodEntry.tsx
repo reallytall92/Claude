@@ -43,16 +43,22 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
   return (
     <motion.div
       layout
-      className="flex items-center gap-3 py-3 px-1"
+      className="py-3 px-1 space-y-1.5"
       initial={{ opacity: 0, x: -8 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 8, transition: { duration: 0.15 } }}
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="flex-1 min-w-0">
-        <div className="font-semibold text-zinc-800 text-sm truncate">{foodName}</div>
-        <div className="text-xs text-zinc-500 mt-0.5">
-          {brand && <span className="mr-1.5">{brand} ·</span>}
+      {/* Row 1: Name + Calories */}
+      <div className="flex items-start justify-between gap-3">
+        <span className="font-semibold text-zinc-800 text-sm leading-snug">{foodName}</span>
+        <span className="font-semibold text-zinc-800 text-sm shrink-0">{Math.round(entry.calories)} cal</span>
+      </div>
+
+      {/* Row 2: Serving info + Macros + Actions */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs text-zinc-400 min-w-0">
+          {brand && <span>{brand} · </span>}
           {editing ? (
             <span className="inline-flex items-center gap-1">
               <input
@@ -65,43 +71,42 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
               <span>servings</span>
             </span>
           ) : (
-            servingDesc
+            <span>{servingDesc}</span>
+          )}
+          <span className="mx-1.5">·</span>
+          <span>P{Math.round(entry.protein)}g</span>
+          <span className="mx-0.5">·</span>
+          <span>C{Math.round(entry.carbs)}g</span>
+          <span className="mx-0.5">·</span>
+          <span>F{Math.round(entry.fat)}g</span>
+        </div>
+
+        <div className="flex gap-0.5 shrink-0">
+          {editing ? (
+            <>
+              <Button variant="ghost" size="icon" onClick={handleSave} className="h-7 w-7">
+                <Check className="h-3.5 w-3.5 text-emerald-600" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => { setServings(String(entry.servings)); setEditing(false); }}
+                className="h-7 w-7"
+              >
+                <X className="h-3.5 w-3.5 text-zinc-400" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="icon" onClick={() => setEditing(true)} className="h-7 w-7">
+                <Pencil className="h-3 w-3 text-zinc-300" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => onDelete(entry.id)} className="h-7 w-7">
+                <Trash2 className="h-3 w-3 text-zinc-300" />
+              </Button>
+            </>
           )}
         </div>
-      </div>
-
-      <div className="text-right shrink-0">
-        <div className="font-semibold text-zinc-800 text-sm">{Math.round(entry.calories)} cal</div>
-        <div className="text-xs text-zinc-400">
-          P {Math.round(entry.protein)}g · C {Math.round(entry.carbs)}g · F {Math.round(entry.fat)}g
-        </div>
-      </div>
-
-      <div className="flex gap-0.5 shrink-0">
-        {editing ? (
-          <>
-            <Button variant="ghost" size="icon" onClick={handleSave} className="h-8 w-8">
-              <Check className="h-3.5 w-3.5 text-emerald-600" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => { setServings(String(entry.servings)); setEditing(false); }}
-              className="h-8 w-8"
-            >
-              <X className="h-3.5 w-3.5 text-zinc-400" />
-            </Button>
-          </>
-        ) : (
-          <>
-            <Button variant="ghost" size="icon" onClick={() => setEditing(true)} className="h-8 w-8">
-              <Pencil className="h-3.5 w-3.5 text-zinc-400" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={() => onDelete(entry.id)} className="h-8 w-8">
-              <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
-            </Button>
-          </>
-        )}
       </div>
     </motion.div>
   );
