@@ -47,7 +47,9 @@ export async function POST(req: NextRequest) {
     max_tokens: 512,
   });
 
-  const text = response.choices[0]?.message?.content ?? "";
+  const raw = response.choices[0]?.message?.content ?? "";
+  // Strip markdown code fences if present (e.g. ```json ... ```)
+  const text = raw.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
   try {
     const parsed = JSON.parse(text);
     return NextResponse.json({

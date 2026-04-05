@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FoodSearchInput, type SearchResult } from "./FoodSearchInput";
 import { ServingSelector } from "./ServingSelector";
 import { ImageScanner } from "./ImageScanner";
+import { FavoriteFoods } from "./FavoriteFoods";
 
 interface QuickAddDrawerProps {
   open: boolean;
@@ -87,11 +88,15 @@ export function QuickAddDrawer({ open, meal, onClose, onAdded }: QuickAddDrawerP
               loading={logging}
             />
           ) : (
-            <Tabs defaultValue="search">
+            <Tabs defaultValue="favorites">
               <TabsList className="mb-4">
+                <TabsTrigger value="favorites">Favorites</TabsTrigger>
                 <TabsTrigger value="search">Search</TabsTrigger>
                 <TabsTrigger value="scan">Scan Label</TabsTrigger>
               </TabsList>
+              <TabsContent value="favorites">
+                <FavoriteFoods onSelect={setSelectedFood} />
+              </TabsContent>
               <TabsContent value="search">
                 <FoodSearchInput onSelect={setSelectedFood} />
               </TabsContent>
