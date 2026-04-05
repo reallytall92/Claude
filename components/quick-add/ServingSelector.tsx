@@ -51,6 +51,7 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
 
   const [unitMode, setUnitMode] = useState<UnitMode>("servings");
   const [amount, setAmount] = useState(1);
+  const [inputValue, setInputValue] = useState(String(amount));
 
   function toServings(mode: UnitMode, value: number): number {
     switch (mode) {
@@ -86,18 +87,23 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
     }
   }
 
+  function setAmountAndInput(value: number) {
+    setAmount(value);
+    setInputValue(formatAmount(value));
+  }
+
   function switchMode(newMode: UnitMode) {
     setUnitMode(newMode);
     // Default to 1 serving equivalent in the new mode
     switch (newMode) {
       case "servings":
-        setAmount(1);
+        setAmountAndInput(1);
         break;
       case "unit":
-        setAmount(food.serving_size);
+        setAmountAndInput(food.serving_size);
         break;
       case "grams":
-        setAmount(isGramUnit ? food.serving_size : food.serving_weight_grams!);
+        setAmountAndInput(isGramUnit ? food.serving_size : food.serving_weight_grams!);
         break;
     }
   }
@@ -159,18 +165,34 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
                   ? "bg-emerald-600 text-white border-emerald-600"
                   : "border-zinc-200 text-zinc-600 hover:border-emerald-400"
               }`}
-              onClick={() => setAmount(s)}
+              onClick={() => setAmountAndInput(s)}
             >
               {formatAmount(s)}
             </button>
           ))}
         </div>
         <input
-          type="number"
-          min="0.1"
-          step={unitMode === "grams" ? "1" : "0.1"}
-          value={amount}
-          onChange={(e) => setAmount(Math.max(0.1, parseFloat(e.target.value) || 0.1))}
+          type="text"
+          inputMode="decimal"
+          value={inputValue}
+          onChange={(e) => {
+            const raw = e.target.value;
+            if (raw === "" || /^\d*\.?\d*$/.test(raw)) {
+              setInputValue(raw);
+              const parsed = parseFloat(raw);
+              if (!isNaN(parsed) && parsed > 0) {
+                setAmount(parsed);
+              }
+            }
+          }}
+          onBlur={() => {
+            const parsed = parseFloat(inputValue);
+            if (isNaN(parsed) || parsed <= 0) {
+              setAmountAndInput(0.1);
+            } else {
+              setInputValue(formatAmount(parsed));
+            }
+          }}
           className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
       </div>

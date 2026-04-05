@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Star, Pencil, Trash2, Plus, Check, X, UtensilsCrossed } from "lucide-react";
+import { Star, Pencil, Trash2, Plus, Check, X, UtensilsCrossed, Camera } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
+import { ImageScanner } from "@/components/quick-add/ImageScanner";
+import type { SearchResult } from "@/components/quick-add/FoodSearchInput";
 
 interface Food {
   id: number;
@@ -224,6 +226,23 @@ function FoodForm({
     fat: food?.fat ?? 0,
   });
   const [saving, setSaving] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanned, setScanned] = useState(false);
+
+  function handleScanned(result: SearchResult) {
+    setForm({
+      name: result.name ?? "",
+      brand: "",
+      serving_size: result.serving_size,
+      serving_unit: result.serving_unit,
+      calories: result.calories,
+      protein: result.protein,
+      carbs: result.carbs,
+      fat: result.fat,
+    });
+    setScanning(false);
+    setScanned(true);
+  }
 
   function set(key: string, val: string | number) {
     setForm((f) => ({ ...f, [key]: val }));
@@ -246,50 +265,68 @@ function FoodForm({
 
   return (
     <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-4 space-y-3">
-      <div className="flex gap-2">
-        <input
-          className="flex-1 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
-          placeholder="Food name *"
-          value={form.name}
-          onChange={(e) => set("name", e.target.value)}
-          required
-        />
-        <input
-          className="w-32 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
-          placeholder="Brand"
-          value={form.brand}
-          onChange={(e) => set("brand", e.target.value)}
-        />
-      </div>
-      <div className="flex gap-2">
+      {!food && !scanned && (
+        scanning ? (
+          <div className="space-y-2">
+            <ImageScanner onScanned={handleScanned} />
+            <Button type="button" variant="ghost" size="sm" className="w-full" onClick={() => setScanning(false)}>
+              Fill in manually instead
+            </Button>
+          </div>
+        ) : (
+          <Button type="button" variant="outline" size="sm" className="w-full" onClick={() => setScanning(true)}>
+            <Camera className="h-4 w-4" /> Scan nutrition label
+          </Button>
+        )
+      )}
+      {scanned && (
+        <div className="text-xs text-emerald-600 bg-emerald-50 rounded-xl px-3 py-2">
+          Label scanned — review the info below and add a name.
+        </div>
+      )}
+      <input
+        className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+        placeholder="Food name *"
+        value={form.name}
+        onChange={(e) => set("name", e.target.value)}
+        required
+        autoFocus={scanned}
+      />
+      <input
+        className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+        placeholder="Brand"
+        value={form.brand}
+        onChange={(e) => set("brand", e.target.value)}
+      />
+      <div className="grid grid-cols-3 gap-2">
         <input
           type="number" min="0.1" step="any"
-          className="w-24 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+          className="min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
           placeholder="Size"
           value={form.serving_size}
           onChange={(e) => set("serving_size", parseFloat(e.target.value))}
         />
         <input
-          className="w-24 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+          className="min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
           placeholder="Unit"
           value={form.serving_unit}
           onChange={(e) => set("serving_unit", e.target.value)}
         />
         <input
           type="number" min="0" step="any"
-          className="flex-1 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+          className="min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
           placeholder="Calories *"
           value={form.calories}
           onChange={(e) => set("calories", parseFloat(e.target.value))}
           required
         />
       </div>
-      <div className="flex gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {(["protein", "carbs", "fat"] as const).map((m) => (
           <input
             key={m}
             type="number" min="0" step="any"
-            className="flex-1 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            className="min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
             placeholder={`${m.charAt(0).toUpperCase() + m.slice(1)} g`}
             value={form[m]}
             onChange={(e) => set(m, parseFloat(e.target.value) || 0)}
