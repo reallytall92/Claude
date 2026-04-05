@@ -37,18 +37,14 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
       { mode: "servings", label: "Servings" },
     ];
 
-    if (!isServingUnit) {
+    if (!isServingUnit && !isGramUnit) {
       modes.push({ mode: "unit", label: food.serving_unit });
     }
 
-    // Always offer grams — for gram-native foods it's a natural choice,
-    // for others it requires gram weight data
-    if (isGramUnit || hasGramWeight) {
-      modes.push({ mode: "grams", label: "Grams" });
-    }
+    modes.push({ mode: "grams", label: "Grams" });
 
     return modes;
-  }, [food.serving_unit, food.serving_weight_grams, isGramUnit, isServingUnit, hasGramWeight]);
+  }, [food.serving_unit, isGramUnit, isServingUnit]);
 
   // Determine initial unit mode from saved default
   const defaultUnit = food.default_unit;
@@ -58,14 +54,12 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
     if (norm === "serving") return "servings";
     if (isGramLike(defaultUnit)) return "grams";
     // Match against the food's native unit (handles plural/case differences like "piece" vs "pieces")
-    if (normalizeUnit(food.serving_unit) === norm) return "unit";
-    // Default unit is a different unit entirely — convert amount to servings
+    if (!isServingUnit && !isGramUnit && normalizeUnit(food.serving_unit) === norm) return "unit";
     return "servings";
   })();
 
-  // Only use default amount if the unit mode was actually resolved (not a fallback)
-  const defaultResolved = defaultUnit != null && initialUnitMode !== "servings" || (defaultUnit != null && normalizeUnit(defaultUnit) === "serving");
-  const initialAmount = defaultResolved && food.default_servings != null && food.default_servings > 0 ? food.default_servings : 1;
+  const hasDefault = food.default_servings != null && food.default_servings > 0 && defaultUnit != null;
+  const initialAmount = hasDefault ? food.default_servings! : 1;
   const [unitMode, setUnitMode] = useState<UnitMode>(initialUnitMode);
   const [amount, setAmount] = useState(initialAmount);
   const [inputValue, setInputValue] = useState(formatAmount(initialAmount));
@@ -79,7 +73,8 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
       case "grams":
         if (isGramUnit) return value / food.serving_size;
         if (hasGramWeight) return value / food.serving_weight_grams!;
-        return value;
+        // Fallback: treat serving_size as gram weight per serving
+        return value / food.serving_size;
     }
   }
 
@@ -98,7 +93,7 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
       case "unit":
         return multipliers.map((m) => Math.round(food.serving_size * m * 10) / 10);
       case "grams": {
-        const g = isGramUnit ? food.serving_size : food.serving_weight_grams!;
+        const g = isGramUnit ? food.serving_size : (food.serving_weight_grams ?? food.serving_size);
         return multipliers.map((m) => Math.round(g * m));
       }
     }
@@ -120,7 +115,7 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
         setAmountAndInput(food.serving_size);
         break;
       case "grams":
-        setAmountAndInput(isGramUnit ? food.serving_size : food.serving_weight_grams!);
+        setAmountAndInput(isGramUnit ? food.serving_size : (food.serving_weight_grams ?? food.serving_size));
         break;
     }
   }

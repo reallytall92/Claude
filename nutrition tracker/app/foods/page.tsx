@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { ImageScanner } from "@/components/quick-add/ImageScanner";
 import type { SearchResult } from "@/components/quick-add/FoodSearchInput";
 
+const UNIT_OPTIONS = ["serving", "g", "oz", "cup", "Tbsp", "tsp", "ml", "piece", "slice", "scoop"];
+
+function unitOptions(currentValue: string): string[] {
+  if (UNIT_OPTIONS.includes(currentValue)) return UNIT_OPTIONS;
+  return [...UNIT_OPTIONS, currentValue];
+}
+
 interface Food {
   id: number;
   name: string;
@@ -329,16 +336,9 @@ function FoodForm({
             value={form.serving_unit}
             onChange={(e) => set("serving_unit", e.target.value)}
           >
-            <option value="serving">serving</option>
-            <option value="g">g</option>
-            <option value="oz">oz</option>
-            <option value="cup">cup</option>
-            <option value="Tbsp">Tbsp</option>
-            <option value="tsp">tsp</option>
-            <option value="ml">ml</option>
-            <option value="piece">piece</option>
-            <option value="slice">slice</option>
-            <option value="scoop">scoop</option>
+            {unitOptions(form.serving_unit).map((u) => (
+              <option key={u} value={u}>{u}</option>
+            ))}
           </select>
         </div>
         <div>
@@ -385,16 +385,9 @@ function FoodForm({
             value={form.default_unit}
             onChange={(e) => set("default_unit", e.target.value)}
           >
-            <option value="serving">servings</option>
-            <option value="g">g</option>
-            <option value="oz">oz</option>
-            <option value="cup">cup</option>
-            <option value="Tbsp">Tbsp</option>
-            <option value="tsp">tsp</option>
-            <option value="ml">ml</option>
-            <option value="piece">piece</option>
-            <option value="slice">slice</option>
-            <option value="scoop">scoop</option>
+            {unitOptions(form.default_unit).map((u) => (
+              <option key={u} value={u}>{u === "serving" ? "servings" : u}</option>
+            ))}
           </select>
         </div>
         <p className="text-[11px] text-zinc-400 mt-1">Pre-fills this amount when logging. Leave blank for 1 serving.</p>
