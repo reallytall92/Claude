@@ -23,6 +23,7 @@ interface Food {
   protein: number;
   carbs: number;
   fat: number;
+  serving_weight_grams?: number | null;
   default_servings?: number | null;
   default_unit?: string | null;
   source?: string;
@@ -235,6 +236,7 @@ function FoodForm({
     protein: food?.protein ?? 0,
     carbs: food?.carbs ?? 0,
     fat: food?.fat ?? 0,
+    serving_weight_grams: food?.serving_weight_grams ?? ("" as number | ""),
     default_servings: food?.default_servings ?? "",
     default_unit: food?.default_unit ?? food?.serving_unit ?? "serving",
   });
@@ -252,6 +254,7 @@ function FoodForm({
       protein: result.protein,
       carbs: result.carbs,
       fat: result.fat,
+      serving_weight_grams: result.serving_weight_grams ?? "",
       default_servings: "",
       default_unit: result.serving_unit,
     });
@@ -273,6 +276,7 @@ function FoodForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
+        serving_weight_grams: form.serving_weight_grams === "" ? null : Number(form.serving_weight_grams),
         default_servings: form.default_servings === "" ? null : Number(form.default_servings),
         default_unit: form.default_servings === "" ? null : form.default_unit,
         source: "custom",
@@ -353,6 +357,22 @@ function FoodForm({
           />
         </div>
       </div>
+      {form.serving_unit !== "g" && (
+        <div>
+          <label className="block text-xs font-medium text-zinc-500 mb-1">
+            Grams per serving — optional
+          </label>
+          <input
+            type="number" min="0" step="any"
+            className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            placeholder={`How many grams is ${form.serving_size} ${form.serving_unit}?`}
+            value={form.serving_weight_grams}
+            onFocus={(e) => e.target.select()}
+            onChange={(e) => set("serving_weight_grams", e.target.value === "" ? "" : parseFloat(e.target.value))}
+          />
+          <p className="text-[11px] text-zinc-400 mt-1">Enables logging by grams.</p>
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-2">
         {(["protein", "carbs", "fat"] as const).map((m) => (
           <div key={m}>

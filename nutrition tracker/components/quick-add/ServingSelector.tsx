@@ -41,10 +41,12 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
       modes.push({ mode: "unit", label: food.serving_unit });
     }
 
-    modes.push({ mode: "grams", label: "Grams" });
+    if (isGramUnit || hasGramWeight) {
+      modes.push({ mode: "grams", label: "Grams" });
+    }
 
     return modes;
-  }, [food.serving_unit, isGramUnit, isServingUnit]);
+  }, [food.serving_unit, isGramUnit, isServingUnit, hasGramWeight]);
 
   // Determine initial unit mode from saved default
   const defaultUnit = food.default_unit;
@@ -72,9 +74,7 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
         return value / food.serving_size;
       case "grams":
         if (isGramUnit) return value / food.serving_size;
-        if (hasGramWeight) return value / food.serving_weight_grams!;
-        // Fallback: treat serving_size as gram weight per serving
-        return value / food.serving_size;
+        return value / food.serving_weight_grams!;
     }
   }
 
@@ -93,7 +93,7 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
       case "unit":
         return multipliers.map((m) => Math.round(food.serving_size * m * 10) / 10);
       case "grams": {
-        const g = isGramUnit ? food.serving_size : (food.serving_weight_grams ?? food.serving_size);
+        const g = isGramUnit ? food.serving_size : food.serving_weight_grams!;
         return multipliers.map((m) => Math.round(g * m));
       }
     }
@@ -115,7 +115,7 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
         setAmountAndInput(food.serving_size);
         break;
       case "grams":
-        setAmountAndInput(isGramUnit ? food.serving_size : (food.serving_weight_grams ?? food.serving_size));
+        setAmountAndInput(isGramUnit ? food.serving_size : food.serving_weight_grams!);
         break;
     }
   }
