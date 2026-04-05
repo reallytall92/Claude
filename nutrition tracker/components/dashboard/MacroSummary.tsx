@@ -96,15 +96,6 @@ function ProgressRing({
             <stop offset="0%" stopColor={color} stopOpacity={0.85} />
             <stop offset="100%" stopColor={color} stopOpacity={1} />
           </linearGradient>
-          {glowColor && (
-            <filter id={`${gradientId}-glow`}>
-              <feGaussianBlur stdDeviation="3" result="blur" />
-              <feMerge>
-                <feMergeNode in="blur" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          )}
         </defs>
 
         {/* Track */}
@@ -129,7 +120,6 @@ function ProgressRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           className="ring-animated"
-          filter={glowColor ? `url(#${gradientId}-glow)` : undefined}
           style={{
             "--ring-circumference": circumference,
             "--ring-offset": offset,
