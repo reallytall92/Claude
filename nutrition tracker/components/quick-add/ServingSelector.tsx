@@ -33,17 +33,14 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
       { mode: "servings", label: "Servings" },
     ];
 
-    if (isGramUnit) {
-      // Native unit is grams — show single "Grams" tab
+    if (!isServingUnit) {
+      modes.push({ mode: "unit", label: food.serving_unit });
+    }
+
+    // Always offer grams — for gram-native foods it's a natural choice,
+    // for others it requires gram weight data
+    if (isGramUnit || hasGramWeight) {
       modes.push({ mode: "grams", label: "Grams" });
-    } else {
-      // Native unit is something else (Tbsp, cup, oz, piece, etc.)
-      if (!isServingUnit) {
-        modes.push({ mode: "unit", label: food.serving_unit });
-      }
-      if (hasGramWeight) {
-        modes.push({ mode: "grams", label: "Grams" });
-      }
     }
 
     return modes;
@@ -54,8 +51,8 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
   const initialUnitMode: UnitMode = (() => {
     if (!defaultUnit || food.default_servings == null) return "servings";
     if (defaultUnit === "serving") return "servings";
-    if (["g", "gram", "grams"].includes(defaultUnit.toLowerCase())) return isGramUnit ? "servings" : "grams";
-    if (defaultUnit === food.serving_unit) return isGramUnit ? "servings" : "unit";
+    if (["g", "gram", "grams"].includes(defaultUnit.toLowerCase())) return "grams";
+    if (defaultUnit === food.serving_unit) return "unit";
     return "servings";
   })();
 
@@ -140,33 +137,19 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
         </div>
       </div>
 
-      {/* Unit mode selector */}
-      {unitModes.length > 1 && (
-        <div className="flex gap-1 mb-4 bg-zinc-100 rounded-lg p-1">
-          {unitModes.map(({ mode, label }) => (
-            <button
-              key={mode}
-              className={`flex-1 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                unitMode === mode
-                  ? "bg-white text-zinc-800 shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-700"
-              }`}
-              onClick={() => switchMode(mode)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-
       <div className="mb-4">
-        <label className="text-sm font-medium text-zinc-700 block mb-2">
-          {unitMode === "servings"
-            ? "Servings"
-            : unitMode === "grams"
-              ? "Grams"
-              : food.serving_unit}
-        </label>
+        <label className="text-sm font-medium text-zinc-700 block mb-2">Amount</label>
+        {unitModes.length > 1 && (
+          <select
+            className="w-full mb-3 border border-zinc-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            value={unitMode}
+            onChange={(e) => switchMode(e.target.value as UnitMode)}
+          >
+            {unitModes.map(({ mode, label }) => (
+              <option key={mode} value={mode}>{label}</option>
+            ))}
+          </select>
+        )}
         <div className="flex gap-2 mb-3">
           {quickPicks.map((s) => (
             <button

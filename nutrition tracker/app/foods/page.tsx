@@ -191,11 +191,9 @@ function FoodRow({
       </div>
 
       <div className="flex gap-0.5 shrink-0">
-        {(food.source === "custom" || food.source === "scanned" || !food.source) && (
-          <Button variant="ghost" size="icon" onClick={onEdit} className="h-8 w-8">
-            <Pencil className="h-3.5 w-3.5 text-zinc-400" />
-          </Button>
-        )}
+        <Button variant="ghost" size="icon" onClick={onEdit} className="h-8 w-8">
+          <Pencil className="h-3.5 w-3.5 text-zinc-400" />
+        </Button>
         <Button variant="ghost" size="icon" onClick={onDelete} className="h-8 w-8">
           <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
         </Button>
