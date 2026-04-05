@@ -1,8 +1,7 @@
 "use client";
 import { useState } from "react";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus, Bookmark } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { Button } from "@/components/ui/button";
 import { FoodEntry } from "./FoodEntry";
 
 type LogEntryWithFood = Parameters<typeof FoodEntry>[0]["entry"];
@@ -13,6 +12,7 @@ interface MealSectionProps {
   onAddFood: (meal: string) => void;
   onDeleteEntry: (id: number) => void;
   onUpdateEntry: (id: number, servings: number) => void;
+  onSaveMeal?: (name: string, items: Array<{ food_id: number; servings: number }>) => void;
 }
 
 const MEAL_LABELS: Record<string, string> = {
@@ -22,9 +22,15 @@ const MEAL_LABELS: Record<string, string> = {
   snack: "Snacks",
 };
 
-export function MealSection({ meal, entries, onAddFood, onDeleteEntry, onUpdateEntry }: MealSectionProps) {
+export function MealSection({ meal, entries, onAddFood, onDeleteEntry, onUpdateEntry, onSaveMeal }: MealSectionProps) {
   const [open, setOpen] = useState(true);
   const totalCal = entries.reduce((s, e) => s + e.calories, 0);
+
+  // Only entries with a food_id can be part of a saved meal
+  const savableItems = entries
+    .filter((e) => e.food_id != null)
+    .map((e) => ({ food_id: e.food_id!, servings: e.servings }));
+  const canSave = onSaveMeal && savableItems.length >= 2;
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 overflow-hidden">
@@ -74,13 +80,27 @@ export function MealSection({ meal, entries, onAddFood, onDeleteEntry, onUpdateE
                 </div>
               )}
 
-              <button
-                className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-emerald-600 active:text-emerald-700 py-2 px-1 rounded-lg hover:bg-emerald-50/60 transition-colors"
-                onClick={() => onAddFood(meal)}
-              >
-                <Plus className="h-4 w-4" />
-                Add food
-              </button>
+              <div className="mt-2 flex items-center gap-3">
+                <button
+                  className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600 active:text-emerald-700 py-2 px-1 rounded-lg hover:bg-emerald-50/60 transition-colors"
+                  onClick={() => onAddFood(meal)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add food
+                </button>
+                {canSave && (
+                  <button
+                    className="flex items-center gap-1.5 text-sm font-medium text-zinc-400 active:text-zinc-600 py-2 px-1 rounded-lg hover:bg-zinc-50 transition-colors"
+                    onClick={() => {
+                      const name = window.prompt("Name this meal:");
+                      if (name?.trim()) onSaveMeal(name.trim(), savableItems);
+                    }}
+                  >
+                    <Bookmark className="h-3.5 w-3.5" />
+                    Save as meal
+                  </button>
+                )}
+              </div>
             </div>
           </motion.div>
         )}

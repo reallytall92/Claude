@@ -126,6 +126,14 @@ export default function DashboardPage() {
     setEntries((prev) => [...prev, entry as LogEntry]);
   }
 
+  async function handleSaveMeal(name: string, items: Array<{ food_id: number; servings: number }>) {
+    await fetch("/api/saved-meals", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, items }),
+    });
+  }
+
   return (
     <div className="space-y-4">
       <DayHeader
@@ -165,6 +173,7 @@ export default function DashboardPage() {
                   onAddFood={(m) => setDrawerMeal(m)}
                   onDeleteEntry={handleDelete}
                   onUpdateEntry={handleUpdate}
+                  onSaveMeal={handleSaveMeal}
                 />
               </motion.div>
             ))}

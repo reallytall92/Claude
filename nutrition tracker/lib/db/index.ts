@@ -76,4 +76,23 @@ export async function runMigrations() {
       value TEXT NOT NULL
     )
   `);
+
+  // Saved meals tables
+  await client.executeMultiple(`
+    CREATE TABLE IF NOT EXISTS saved_meals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS saved_meal_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      saved_meal_id INTEGER NOT NULL REFERENCES saved_meals(id),
+      food_id INTEGER NOT NULL REFERENCES foods(id),
+      servings REAL NOT NULL DEFAULT 1,
+      sort_order INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_saved_meal_items_meal ON saved_meal_items(saved_meal_id);
+  `);
 }

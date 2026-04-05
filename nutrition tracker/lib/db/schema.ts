@@ -36,7 +36,23 @@ export const log_entries = sqliteTable("log_entries", {
   created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
 });
 
+export const saved_meals = sqliteTable("saved_meals", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  name: text("name").notNull(),
+  created_at: text("created_at").default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const saved_meal_items = sqliteTable("saved_meal_items", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  saved_meal_id: integer("saved_meal_id").notNull().references(() => saved_meals.id),
+  food_id: integer("food_id").notNull().references(() => foods.id),
+  servings: real("servings").notNull().default(1),
+  sort_order: integer("sort_order").notNull().default(0),
+});
+
 export type Food = typeof foods.$inferSelect;
 export type NewFood = typeof foods.$inferInsert;
 export type LogEntry = typeof log_entries.$inferSelect;
 export type NewLogEntry = typeof log_entries.$inferInsert;
+export type SavedMeal = typeof saved_meals.$inferSelect;
+export type SavedMealItem = typeof saved_meal_items.$inferSelect;
