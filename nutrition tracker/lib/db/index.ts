@@ -55,6 +55,13 @@ export async function runMigrations() {
     // Column already exists — ignore
   }
 
+  // Add default_servings column if missing
+  try {
+    await client.execute(`ALTER TABLE foods ADD COLUMN default_servings REAL`);
+  } catch {
+    // Column already exists — ignore
+  }
+
   // User settings table for targets
   await client.execute(`
     CREATE TABLE IF NOT EXISTS user_settings (

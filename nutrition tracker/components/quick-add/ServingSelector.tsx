@@ -49,9 +49,10 @@ export function ServingSelector({ food, meal, onConfirm, onBack, loading }: Serv
     return modes;
   }, [food.serving_unit, food.serving_weight_grams, isGramUnit, isServingUnit, hasGramWeight]);
 
+  const initialAmount = food.default_servings != null && food.default_servings > 0 ? food.default_servings : 1;
   const [unitMode, setUnitMode] = useState<UnitMode>("servings");
-  const [amount, setAmount] = useState(1);
-  const [inputValue, setInputValue] = useState(String(amount));
+  const [amount, setAmount] = useState(initialAmount);
+  const [inputValue, setInputValue] = useState(formatAmount(initialAmount));
 
   function toServings(mode: UnitMode, value: number): number {
     switch (mode) {

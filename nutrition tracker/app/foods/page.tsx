@@ -16,6 +16,7 @@ interface Food {
   protein: number;
   carbs: number;
   fat: number;
+  default_servings?: number | null;
   source?: string;
   is_favorite: number;
 }
@@ -178,7 +179,11 @@ function FoodRow({
         <div className="font-medium text-zinc-800 text-sm truncate">{food.name}</div>
         <div className="text-xs text-zinc-400 truncate">
           {food.brand && <span className="mr-1.5">{food.brand} ·</span>}
-          {food.serving_size}{food.serving_unit} ·{" "}
+          {food.serving_size}{food.serving_unit}
+          {food.default_servings != null && food.default_servings > 0 && (
+            <span className="text-emerald-500"> · default {Math.round(food.default_servings * food.serving_size * 10) / 10}{food.serving_unit}</span>
+          )}
+          {" "}·{" "}
           <span className="font-medium text-zinc-600">{Math.round(food.calories)} cal</span>
           <span className="ml-1.5">P{food.protein}g C{food.carbs}g F{food.fat}g</span>
         </div>
@@ -224,6 +229,9 @@ function FoodForm({
     protein: food?.protein ?? 0,
     carbs: food?.carbs ?? 0,
     fat: food?.fat ?? 0,
+    default_servings: food?.default_servings != null && food.default_servings > 0
+      ? Math.round(food.default_servings * (food?.serving_size ?? 1) * 10) / 10
+      : "",
   });
   const [saving, setSaving] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -239,6 +247,7 @@ function FoodForm({
       protein: result.protein,
       carbs: result.carbs,
       fat: result.fat,
+      default_servings: "",
     });
     setScanning(false);
     setScanned(true);
@@ -256,7 +265,11 @@ function FoodForm({
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, source: "custom" }),
+      body: JSON.stringify({
+        ...form,
+        default_servings: form.default_servings === "" ? null : Number(form.default_servings) / form.serving_size,
+        source: "custom",
+      }),
     });
     const saved = await res.json();
     setSaving(false);
@@ -353,6 +366,20 @@ function FoodForm({
             />
           </div>
         ))}
+      </div>
+      <div>
+        <label className="block text-xs font-medium text-zinc-500 mb-1">
+          Default amount ({form.serving_unit}) — optional
+        </label>
+        <input
+          type="number" min="0" step="any"
+          className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+          placeholder={`e.g. ${form.serving_size}`}
+          value={form.default_servings}
+          onFocus={(e) => e.target.select()}
+          onChange={(e) => set("default_servings", e.target.value === "" ? "" : parseFloat(e.target.value))}
+        />
+        <p className="text-[11px] text-zinc-400 mt-1">Pre-fills this amount when logging. Leave blank for 1 serving.</p>
       </div>
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
