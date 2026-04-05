@@ -49,6 +49,7 @@ export function QuickAddDrawer({ open, meal, onClose, onAdded }: QuickAddDrawerP
               brand: food.brand ?? null,
               serving_size: food.serving_size,
               serving_unit: food.serving_unit,
+              serving_weight_grams: food.serving_weight_grams ?? null,
               calories: food.calories,
               protein: food.protein,
               carbs: food.carbs,

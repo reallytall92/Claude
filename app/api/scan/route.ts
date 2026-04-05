@@ -9,7 +9,8 @@ Extract the information and return ONLY a valid JSON object with these fields (u
 {
   "name": "product name if visible, otherwise null",
   "serving_size": <number>,
-  "serving_unit": "<unit string, e.g. 'g', 'oz', 'cup', 'piece'>",
+  "serving_unit": "<unit string, e.g. 'g', 'oz', 'cup', 'Tbsp', 'piece'>",
+  "serving_weight_grams": <number or null>,
   "calories": <number>,
   "protein_g": <number>,
   "carbs_g": <number>,
@@ -17,6 +18,7 @@ Extract the information and return ONLY a valid JSON object with these fields (u
   "fiber_g": <number or null>,
   "sugar_g": <number or null>
 }
+For serving_weight_grams: if the serving unit is NOT grams and the label shows a gram equivalent (e.g. "2 Tbsp (30g)"), extract the gram weight (30 in this example). If the serving unit is already grams, set this to null. If no gram equivalent is shown, set to null.
 Return ONLY the JSON object, no markdown, no explanation.`;
 
 export async function POST(req: NextRequest) {
@@ -56,6 +58,7 @@ export async function POST(req: NextRequest) {
       name: parsed.name ?? null,
       serving_size: parsed.serving_size ?? 1,
       serving_unit: parsed.serving_unit ?? "serving",
+      serving_weight_grams: parsed.serving_weight_grams ?? null,
       calories: parsed.calories ?? 0,
       protein: parsed.protein_g ?? 0,
       carbs: parsed.carbs_g ?? 0,

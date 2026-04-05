@@ -47,4 +47,11 @@ export async function runMigrations() {
     CREATE INDEX IF NOT EXISTS idx_foods_external_id ON foods(external_id);
     CREATE INDEX IF NOT EXISTS idx_foods_favorite ON foods(is_favorite);
   `);
+
+  // Add serving_weight_grams column if missing (migration for existing DBs)
+  try {
+    await client.execute(`ALTER TABLE foods ADD COLUMN serving_weight_grams REAL`);
+  } catch {
+    // Column already exists — ignore
+  }
 }

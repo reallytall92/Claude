@@ -35,6 +35,7 @@ export function ImageScanner({ onScanned }: ImageScannerProps) {
         name: data.name ?? "Scanned food",
         serving_size: data.serving_size,
         serving_unit: data.serving_unit,
+        serving_weight_grams: data.serving_weight_grams ?? null,
         calories: data.calories,
         protein: data.protein,
         carbs: data.carbs,

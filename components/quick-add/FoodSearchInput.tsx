@@ -14,6 +14,7 @@ export interface SearchResult {
   fat: number;
   fiber?: number | null;
   sugar?: number | null;
+  serving_weight_grams?: number | null;
   source?: string;
   external_id?: string;
   is_favorite?: number;
