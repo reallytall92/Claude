@@ -1,0 +1,410 @@
+import type { StepConfig } from "./types";
+
+export const STEPS: Record<string, StepConfig> = {
+  // ── Property ─────────────────────────────────────────────
+  propertyAddress: {
+    id: "propertyAddress",
+    section: "property",
+    prompt: "What's the property address?",
+    inputType: "addressAutocomplete",
+    field: "propertyAddress",
+    placeholder: "Start typing an address...",
+  },
+  county: {
+    id: "county",
+    section: "property",
+    prompt: "What county is this property in?",
+    inputType: "text",
+    field: "county",
+    placeholder: "Dorchester",
+  },
+
+  // ── Parties ──────────────────────────────────────────────
+  tenantName: {
+    id: "tenantName",
+    section: "parties",
+    prompt: "Tenant's full name?",
+    inputType: "text",
+    field: "pendingTenantName",
+    placeholder: "John Doe",
+  },
+  addAnotherTenant: {
+    id: "addAnotherTenant",
+    section: "parties",
+    prompt: "Add another tenant?",
+    inputType: "yesno",
+    field: "addAnotherTenant",
+  },
+
+  // ── Term ─────────────────────────────────────────────────
+  leaseStartDate: {
+    id: "leaseStartDate",
+    section: "term",
+    prompt: "When does the lease start?",
+    inputType: "date",
+    field: "leaseStartDate",
+  },
+  leaseTermLength: {
+    id: "leaseTermLength",
+    section: "term",
+    prompt: "How long is the lease?",
+    inputType: "choice",
+    field: "leaseTermOption",
+    choices: [
+      { value: "sixMonths", label: "6 Months" },
+      { value: "twelveMonths", label: "12 Months" },
+      { value: "custom", label: "Custom Length" },
+    ],
+  },
+  customTermLength: {
+    id: "customTermLength",
+    section: "term",
+    prompt: "How many months?",
+    inputType: "integer",
+    field: "customTermMonths",
+  },
+
+  // ── Financials ───────────────────────────────────────────
+  monthlyRent: {
+    id: "monthlyRent",
+    section: "financials",
+    prompt: "Monthly rent amount?",
+    inputType: "currency",
+    field: "monthlyRent",
+  },
+  securityDepositMatchesRent: {
+    id: "securityDepositMatchesRent",
+    section: "financials",
+    prompt: "Security deposit same as rent?",
+    inputType: "yesno",
+    field: "securityDepositMatchesRent",
+  },
+  securityDeposit: {
+    id: "securityDeposit",
+    section: "financials",
+    prompt: "Security deposit amount?",
+    inputType: "currency",
+    field: "securityDeposit",
+  },
+
+  // ── Keys & Access ────────────────────────────────────────
+  numberOfKeys: {
+    id: "numberOfKeys",
+    section: "access",
+    prompt: "How many keys?",
+    inputType: "integer",
+    field: "numberOfKeys",
+  },
+  numberOfGarageOpeners: {
+    id: "numberOfGarageOpeners",
+    section: "access",
+    prompt: "Garage door openers?",
+    inputType: "integer",
+    field: "numberOfGarageOpeners",
+  },
+  numberOfMailboxKeys: {
+    id: "numberOfMailboxKeys",
+    section: "access",
+    prompt: "Mailbox keys?",
+    inputType: "integer",
+    field: "numberOfMailboxKeys",
+  },
+  numberOfPoolAccessCards: {
+    id: "numberOfPoolAccessCards",
+    section: "access",
+    prompt: "Pool access cards?",
+    inputType: "integer",
+    field: "numberOfPoolAccessCards",
+  },
+
+  // ── Extra Items ──────────────────────────────────────────
+  anyExtraItems: {
+    id: "anyExtraItems",
+    section: "extraItems",
+    prompt: "Any other items to provide?",
+    inputType: "yesno",
+    field: "hasExtraItems",
+  },
+  extraItemName: {
+    id: "extraItemName",
+    section: "extraItems",
+    prompt: "Item name?",
+    inputType: "text",
+    field: "extraItemName",
+    placeholder: "Gate fob",
+  },
+  extraItemQuantity: {
+    id: "extraItemQuantity",
+    section: "extraItems",
+    prompt: "How many?",
+    inputType: "integer",
+    field: "extraItemQuantity",
+  },
+  addAnotherExtraItem: {
+    id: "addAnotherExtraItem",
+    section: "extraItems",
+    prompt: "Add another item?",
+    inputType: "yesno",
+    field: "addAnotherExtraItem",
+  },
+
+  // ── Occupancy ────────────────────────────────────────────
+  maxOccupants: {
+    id: "maxOccupants",
+    section: "occupancy",
+    prompt: "Maximum occupants?",
+    inputType: "integer",
+    field: "maxOccupants",
+  },
+
+  // ── Pets ─────────────────────────────────────────────────
+  anyPets: {
+    id: "anyPets",
+    section: "pets",
+    prompt: "Will there be any pets?",
+    inputType: "yesno",
+    field: "hasPets",
+  },
+  petDeposit: {
+    id: "petDeposit",
+    section: "pets",
+    prompt: "Pet deposit amount?",
+    inputType: "currency",
+    field: "petDeposit",
+  },
+  petRent: {
+    id: "petRent",
+    section: "pets",
+    prompt: "Monthly pet rent?",
+    inputType: "currency",
+    field: "petRent",
+  },
+
+  // ── Utilities ────────────────────────────────────────────
+  waterIncluded: {
+    id: "waterIncluded",
+    section: "utilities",
+    prompt: "Is water included?",
+    inputType: "yesno",
+    field: "waterIncluded",
+  },
+  sewerIncluded: {
+    id: "sewerIncluded",
+    section: "utilities",
+    prompt: "Is sewer included?",
+    inputType: "yesno",
+    field: "sewerIncluded",
+  },
+  electricIncluded: {
+    id: "electricIncluded",
+    section: "utilities",
+    prompt: "Is electric included?",
+    inputType: "yesno",
+    field: "electricIncluded",
+  },
+  gasIncluded: {
+    id: "gasIncluded",
+    section: "utilities",
+    prompt: "Is gas included?",
+    inputType: "yesno",
+    field: "gasIncluded",
+  },
+  trashIncluded: {
+    id: "trashIncluded",
+    section: "utilities",
+    prompt: "Is trash included?",
+    inputType: "yesno",
+    field: "trashIncluded",
+  },
+  internetIncluded: {
+    id: "internetIncluded",
+    section: "utilities",
+    prompt: "Is internet included?",
+    inputType: "yesno",
+    field: "internetIncluded",
+  },
+  anyOtherUtilities: {
+    id: "anyOtherUtilities",
+    section: "utilities",
+    prompt: "Any other utilities included?",
+    inputType: "yesno",
+    field: "hasOtherUtilities",
+  },
+  otherUtilityName: {
+    id: "otherUtilityName",
+    section: "utilities",
+    prompt: "Utility name?",
+    inputType: "text",
+    field: "otherUtilityName",
+    placeholder: "HOA fees",
+  },
+  addAnotherUtility: {
+    id: "addAnotherUtility",
+    section: "utilities",
+    prompt: "Add another utility?",
+    inputType: "yesno",
+    field: "addAnotherUtility",
+  },
+
+  // ── Appliances ───────────────────────────────────────────
+  stoveProvided: {
+    id: "stoveProvided",
+    section: "appliances",
+    prompt: "Is a stove provided?",
+    inputType: "yesno",
+    field: "stoveProvided",
+  },
+  refrigeratorProvided: {
+    id: "refrigeratorProvided",
+    section: "appliances",
+    prompt: "Is a refrigerator provided?",
+    inputType: "yesno",
+    field: "refrigeratorProvided",
+  },
+  dishwasherProvided: {
+    id: "dishwasherProvided",
+    section: "appliances",
+    prompt: "Is a dishwasher provided?",
+    inputType: "yesno",
+    field: "dishwasherProvided",
+  },
+  garbageDisposalProvided: {
+    id: "garbageDisposalProvided",
+    section: "appliances",
+    prompt: "Is a garbage disposal provided?",
+    inputType: "yesno",
+    field: "garbageDisposalProvided",
+  },
+  washerProvided: {
+    id: "washerProvided",
+    section: "appliances",
+    prompt: "Is a washer provided?",
+    inputType: "yesno",
+    field: "washerProvided",
+  },
+  dryerProvided: {
+    id: "dryerProvided",
+    section: "appliances",
+    prompt: "Is a dryer provided?",
+    inputType: "yesno",
+    field: "dryerProvided",
+  },
+  microwaveProvided: {
+    id: "microwaveProvided",
+    section: "appliances",
+    prompt: "Is a microwave provided?",
+    inputType: "yesno",
+    field: "microwaveProvided",
+  },
+  trashCompactorProvided: {
+    id: "trashCompactorProvided",
+    section: "appliances",
+    prompt: "Is a trash compactor provided?",
+    inputType: "yesno",
+    field: "trashCompactorProvided",
+  },
+  anyOtherAppliances: {
+    id: "anyOtherAppliances",
+    section: "appliances",
+    prompt: "Any other appliances?",
+    inputType: "yesno",
+    field: "hasOtherAppliances",
+  },
+  otherApplianceName: {
+    id: "otherApplianceName",
+    section: "appliances",
+    prompt: "Appliance name?",
+    inputType: "text",
+    field: "otherApplianceName",
+    placeholder: "Wine cooler",
+  },
+  addAnotherAppliance: {
+    id: "addAnotherAppliance",
+    section: "appliances",
+    prompt: "Add another appliance?",
+    inputType: "yesno",
+    field: "addAnotherAppliance",
+  },
+
+  // ── Additional Terms ─────────────────────────────────────
+  additionalTerms: {
+    id: "additionalTerms",
+    section: "additional",
+    prompt: "Any additional terms?",
+    inputType: "textarea",
+    field: "additionalTerms",
+    placeholder: "No smoking. Late fee after 5th of each month...",
+  },
+
+  // ── Review ───────────────────────────────────────────────
+  review: {
+    id: "review",
+    section: "review",
+    prompt: "Review your lease",
+    inputType: "review",
+    field: "additionalTerms", // unused for review
+  },
+};
+
+/** Progress percentage for each step (hand-tuned for smooth UX). */
+export const PROGRESS_MAP: Record<string, number> = {
+  propertyAddress: 2,
+  county: 5,
+  tenantName: 8,
+  addAnotherTenant: 12,
+  leaseStartDate: 18,
+  leaseTermLength: 22,
+  customTermLength: 24,
+  monthlyRent: 28,
+  securityDepositMatchesRent: 32,
+  securityDeposit: 34,
+  numberOfKeys: 38,
+  numberOfGarageOpeners: 41,
+  numberOfMailboxKeys: 44,
+  numberOfPoolAccessCards: 47,
+  anyExtraItems: 50,
+  extraItemName: 51,
+  extraItemQuantity: 52,
+  addAnotherExtraItem: 53,
+  maxOccupants: 56,
+  anyPets: 60,
+  petDeposit: 62,
+  petRent: 64,
+  waterIncluded: 67,
+  sewerIncluded: 69,
+  electricIncluded: 71,
+  gasIncluded: 73,
+  trashIncluded: 75,
+  internetIncluded: 77,
+  anyOtherUtilities: 79,
+  otherUtilityName: 80,
+  addAnotherUtility: 81,
+  stoveProvided: 83,
+  refrigeratorProvided: 85,
+  dishwasherProvided: 86,
+  garbageDisposalProvided: 87,
+  washerProvided: 88,
+  dryerProvided: 89,
+  microwaveProvided: 90,
+  trashCompactorProvided: 91,
+  anyOtherAppliances: 92,
+  otherApplianceName: 93,
+  addAnotherAppliance: 94,
+  additionalTerms: 96,
+  review: 100,
+};
+
+/** First step ID for each section (used by review "Edit" buttons). */
+export const SECTION_FIRST_STEP: Record<string, string> = {
+  property: "propertyAddress",
+  parties: "tenantName",
+  term: "leaseStartDate",
+  financials: "monthlyRent",
+  access: "numberOfKeys",
+  extraItems: "anyExtraItems",
+  occupancy: "maxOccupants",
+  pets: "anyPets",
+  utilities: "waterIncluded",
+  appliances: "stoveProvided",
+  additional: "additionalTerms",
+};
