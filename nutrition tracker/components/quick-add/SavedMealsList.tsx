@@ -83,7 +83,7 @@ export function SavedMealsList({ meal, date, onAdded }: SavedMealsListProps) {
       {meals.map((m) => (
         <button
           key={m.id}
-          className="w-full text-left rounded-xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-[--color-surface] p-4 active:bg-zinc-50 dark:active:bg-zinc-800 transition-colors disabled:opacity-50"
+          className="w-full text-left rounded-xl border border-zinc-100 dark:border-zinc-800 bg-[--color-surface] p-4 active:bg-zinc-50 dark:active:bg-zinc-800 transition-colors disabled:opacity-50"
           onClick={() => handleLog(m.id)}
           disabled={loggingId !== null}
         >

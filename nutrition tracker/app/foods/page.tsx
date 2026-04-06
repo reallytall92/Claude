@@ -175,7 +175,7 @@ function FoodRow({
   onDelete: () => void;
 }) {
   return (
-    <div className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm px-4 py-3 flex items-center gap-3">
+    <div className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm px-4 py-3 flex items-center gap-3">
       <button onClick={() => onFavorite(food)} className="shrink-0">
         <motion.div whileTap={{ scale: 1.3 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
           <Star
@@ -291,7 +291,7 @@ function FoodForm({
   const selectClasses = "w-full min-w-0 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow";
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="bg-[--color-surface] rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-4 space-y-3">
       {!food && !scanned && (
         scanning ? (
           <div className="space-y-2">

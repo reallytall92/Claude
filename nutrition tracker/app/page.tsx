@@ -31,7 +31,7 @@ function stepDate(dateStr: string, days: number): string {
 /* ─── Skeleton placeholders ─── */
 function MacroSummarySkeleton() {
   return (
-    <div className="bg-white dark:bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100/80 dark:border-zinc-800/80 p-5">
+    <div className="bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100/80 dark:border-zinc-800/80 p-5">
       <div className="flex items-center gap-5">
         <div className="skeleton shrink-0" style={{ width: 128, height: 128, borderRadius: "50%" }} />
         <div className="flex-1 flex flex-col gap-3">
@@ -52,7 +52,7 @@ function MacroSummarySkeleton() {
 
 function MealSectionSkeleton() {
   return (
-    <div className="bg-white dark:bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
+    <div className="bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4">
         <div className="flex items-center gap-2">
           <div className="skeleton h-4 w-4 rounded" />

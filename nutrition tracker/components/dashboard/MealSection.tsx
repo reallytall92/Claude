@@ -33,7 +33,7 @@ export function MealSection({ meal, entries, onAddFood, onDeleteEntry, onUpdateE
   const canSave = onSaveMeal && savableItems.length >= 2;
 
   return (
-    <div className="bg-white dark:bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
+    <div className="bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
       <button
         className="w-full flex items-center justify-between px-5 py-4 active:bg-zinc-50/80 dark:active:bg-zinc-800/80 transition-colors"
         onClick={() => setOpen((o) => !o)}

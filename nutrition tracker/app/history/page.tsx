@@ -55,7 +55,7 @@ function WeeklySparkline({ summaries }: { summaries: Map<string, DaySummary> }) 
   const maxCal = Math.max(...days.map((d) => d.calories), 1);
 
   return (
-    <div className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4">
+    <div className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4">
       <div className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3">
         Last 7 days
       </div>
@@ -193,7 +193,7 @@ export default function HistoryPage() {
       </div>
 
       <motion.div
-        className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4"
+        className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
@@ -260,7 +260,7 @@ export default function HistoryPage() {
         {selectedDate && (
           <motion.div
             key={selectedDate}
-            className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4"
+            className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}

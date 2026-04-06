@@ -39,7 +39,7 @@ function ThemeSelector() {
 
   return (
     <motion.div
-      className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5"
+      className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
@@ -119,7 +119,7 @@ export default function SettingsPage() {
 
       <motion.form
         onSubmit={handleSave}
-        className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5 space-y-4"
+        className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-5 space-y-4"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}

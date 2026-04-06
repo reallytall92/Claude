@@ -209,7 +209,7 @@ export function MacroSummary({ macros, goals }: { macros: Macros; goals?: Goals 
 
   return (
     <motion.div
-      className="bg-white dark:bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100/80 dark:border-zinc-800/80 p-5"
+      className="bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100/80 dark:border-zinc-800/80 p-5"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
