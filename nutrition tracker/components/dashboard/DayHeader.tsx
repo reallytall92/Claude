@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/utils";
 
 interface DayHeaderProps {
   date: string; // YYYY-MM-DD
@@ -11,8 +12,10 @@ interface DayHeaderProps {
 }
 
 function formatDisplayDate(dateStr: string): { label: string; sub: string } {
-  const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  const today = formatDate(new Date());
+  const yd = new Date();
+  yd.setDate(yd.getDate() - 1);
+  const yesterday = formatDate(yd);
 
   const d = new Date(dateStr + "T00:00:00");
   const weekday = d.toLocaleDateString("en-US", { weekday: "long" });
@@ -24,7 +27,7 @@ function formatDisplayDate(dateStr: string): { label: string; sub: string } {
 }
 
 export function DayHeader({ date, onPrev, onNext }: DayHeaderProps) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = formatDate(new Date());
   const isToday = date === today;
   const { label, sub } = formatDisplayDate(date);
   const directionRef = useRef(1);

@@ -5,7 +5,7 @@ import { DayHeader } from "@/components/dashboard/DayHeader";
 import { MacroSummary } from "@/components/dashboard/MacroSummary";
 import { MealSection } from "@/components/dashboard/MealSection";
 import { QuickAddDrawer } from "@/components/quick-add/QuickAddDrawer";
-import { todayStr } from "@/lib/utils";
+import { todayStr, formatDate } from "@/lib/utils";
 
 const MEALS = ["breakfast", "lunch", "dinner", "snack"] as const;
 type Meal = (typeof MEALS)[number];
@@ -25,7 +25,7 @@ interface LogEntry {
 function stepDate(dateStr: string, days: number): string {
   const d = new Date(dateStr + "T00:00:00");
   d.setDate(d.getDate() + days);
-  return d.toISOString().split("T")[0];
+  return formatDate(d);
 }
 
 /* ─── Skeleton placeholders ─── */

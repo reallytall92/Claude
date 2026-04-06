@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/utils";
 
 interface DaySummary {
   date: string;
@@ -42,7 +43,7 @@ function WeeklySparkline({ summaries }: { summaries: Map<string, DaySummary> }) 
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0];
+    const dateStr = formatDate(d);
     const s = summaries.get(dateStr);
     days.push({
       label: d.toLocaleDateString("en-US", { weekday: "narrow" }),
@@ -121,7 +122,7 @@ export default function HistoryPage() {
     const days = getMonthDays(year, month);
     const results = await Promise.all(
       days.map(async (d) => {
-        const dateStr = d.toISOString().split("T")[0];
+        const dateStr = formatDate(d);
         const res = await fetch(`/api/log?date=${dateStr}`);
         const entries: LogEntry[] = await res.json();
         if (entries.length === 0) return null;
@@ -203,7 +204,7 @@ export default function HistoryPage() {
           {days.map((day) => {
             const dateStr = day.toISOString().split("T")[0];
             const summary = summaries.get(dateStr);
-            const isToday = dateStr === today.toISOString().split("T")[0];
+            const isToday = dateStr === formatDate(today);
             const isFuture = day > today;
             const isSelected = dateStr === selectedDate;
 
