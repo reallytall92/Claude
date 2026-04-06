@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Star, Pencil, Trash2, Plus, Check, X, UtensilsCrossed, Camera } from "lucide-react";
+import { Star, Pencil, Trash2, Plus, Check, X, UtensilsCrossed, Camera, Bookmark } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { ImageScanner } from "@/components/quick-add/ImageScanner";
@@ -30,19 +30,47 @@ interface Food {
   is_favorite: number;
 }
 
-type Tab = "all" | "custom" | "favorites";
+type Tab = "all" | "custom" | "favorites" | "meals";
+
+interface SavedMeal {
+  id: number;
+  name: string;
+  items: Array<{ id: number; food_name: string; servings: number }>;
+  totals: { calories: number; protein: number; carbs: number; fat: number };
+}
 
 export default function FoodsPage() {
   const [foods, setFoods] = useState<Food[]>([]);
   const [tab, setTab] = useState<Tab>("all");
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [meals, setMeals] = useState<SavedMeal[]>([]);
 
-  useEffect(() => { fetchFoods(); }, []);
+  useEffect(() => { fetchFoods(); fetchMeals(); }, []);
 
   async function fetchFoods() {
     const res = await fetch("/api/foods");
     setFoods(await res.json());
+  }
+
+  async function fetchMeals() {
+    const res = await fetch("/api/saved-meals");
+    setMeals(await res.json());
+  }
+
+  async function renameMeal(id: number, name: string) {
+    await fetch(`/api/saved-meals/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    setMeals((prev) => prev.map((m) => (m.id === id ? { ...m, name } : m)));
+  }
+
+  async function deleteMeal(id: number) {
+    if (!confirm("Delete this saved meal?")) return;
+    await fetch(`/api/saved-meals/${id}`, { method: "DELETE" });
+    setMeals((prev) => prev.filter((m) => m.id !== id));
   }
 
   async function toggleFavorite(food: Food) {
@@ -70,11 +98,13 @@ export default function FoodsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-zinc-800 dark:text-zinc-100">Food Library</h1>
-        <Button size="sm" onClick={() => setShowAddForm(true)}>
-          <Plus className="h-4 w-4" />
-          Add custom
-        </Button>
+        <h1 className="text-xl font-bold text-zinc-800 dark:text-zinc-100">{tab === "meals" ? "Saved Meals" : "Food Library"}</h1>
+        {tab !== "meals" && (
+          <Button size="sm" onClick={() => setShowAddForm(true)}>
+            <Plus className="h-4 w-4" />
+            Add custom
+          </Button>
+        )}
       </div>
 
       <AnimatePresence>
@@ -96,7 +126,7 @@ export default function FoodsPage() {
 
       {/* Tab bar with animated indicator */}
       <div className="relative flex gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
-        {(["all", "custom", "favorites"] as Tab[]).map((t) => (
+        {(["all", "custom", "favorites", "meals"] as Tab[]).map((t) => (
           <button
             key={t}
             className={`relative flex-1 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors z-10 ${
@@ -116,7 +146,9 @@ export default function FoodsPage() {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {tab === "meals" ? (
+        <MealsTab meals={meals} onRename={renameMeal} onDelete={deleteMeal} />
+      ) : filtered.length === 0 ? (
         <motion.div
           className="text-center py-16"
           initial={{ opacity: 0 }}
@@ -206,6 +238,112 @@ function FoodRow({
           <Trash2 className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
         </Button>
       </div>
+    </div>
+  );
+}
+
+function MealsTab({
+  meals,
+  onRename,
+  onDelete,
+}: {
+  meals: SavedMeal[];
+  onRename: (id: number, name: string) => void;
+  onDelete: (id: number) => void;
+}) {
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editName, setEditName] = useState("");
+
+  if (meals.length === 0) {
+    return (
+      <motion.div
+        className="text-center py-16"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Bookmark className="h-10 w-10 text-zinc-200 dark:text-zinc-700 mx-auto mb-3" />
+        <p className="text-zinc-400 dark:text-zinc-500 text-sm">
+          No saved meals yet — save a meal from the Today page.
+        </p>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {meals.map((meal, i) => (
+        <motion.div
+          key={meal.id}
+          className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm px-4 py-3"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.3), ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              {editingId === meal.id ? (
+                <form
+                  className="flex items-center gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (editName.trim()) {
+                      onRename(meal.id, editName.trim());
+                      setEditingId(null);
+                    }
+                  }}
+                >
+                  <input
+                    className="flex-1 min-w-0 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    autoFocus
+                  />
+                  <Button type="submit" variant="ghost" size="icon" className="h-7 w-7">
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                  </Button>
+                  <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditingId(null)}>
+                    <X className="h-3.5 w-3.5 text-zinc-400" />
+                  </Button>
+                </form>
+              ) : (
+                <>
+                  <div className="font-medium text-zinc-800 dark:text-zinc-200 text-sm truncate">{meal.name}</div>
+                  <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate mt-0.5">
+                    {meal.items.map((item) => item.food_name).join(", ")}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {editingId !== meal.id && (
+              <div className="flex gap-0.5 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => { setEditingId(meal.id); setEditName(meal.name); }}
+                >
+                  <Pencil className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(meal.id)}>
+                  <Trash2 className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {editingId !== meal.id && (
+            <div className="flex gap-3 mt-2 text-xs text-zinc-400 dark:text-zinc-500">
+              <span className="font-medium text-zinc-600 dark:text-zinc-400">{Math.round(meal.totals.calories)} cal</span>
+              <span>P {Math.round(meal.totals.protein)}g</span>
+              <span>C {Math.round(meal.totals.carbs)}g</span>
+              <span>F {Math.round(meal.totals.fat)}g</span>
+              <span>{meal.items.length} items</span>
+            </div>
+          )}
+        </motion.div>
+      ))}
     </div>
   );
 }
