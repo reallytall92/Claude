@@ -4,7 +4,7 @@ import { Star, Pencil, Trash2, Plus, Check, X, UtensilsCrossed, Camera, Bookmark
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { ImageScanner } from "@/components/quick-add/ImageScanner";
-import type { SearchResult } from "@/components/quick-add/FoodSearchInput";
+import { FoodSearchInput, type SearchResult } from "@/components/quick-add/FoodSearchInput";
 
 const UNIT_OPTIONS = ["serving", "g", "oz", "cup", "Tbsp", "tsp", "ml", "piece", "slice", "scoop"];
 
@@ -255,6 +255,46 @@ function FoodRow({
   );
 }
 
+interface EditItem {
+  food_id: number;
+  food_name: string;
+  food_calories: number;
+  food_protein: number;
+  food_carbs: number;
+  food_fat: number;
+  food_serving_size: number;
+  food_serving_unit: string;
+  amount: number; // actual amount in the food's unit (servings × serving_size)
+}
+
+function mealItemToEditItem(item: SavedMealItem): EditItem {
+  return {
+    food_id: item.food_id,
+    food_name: item.food_name,
+    food_calories: item.food_calories,
+    food_protein: item.food_protein,
+    food_carbs: item.food_carbs,
+    food_fat: item.food_fat,
+    food_serving_size: item.food_serving_size,
+    food_serving_unit: item.food_serving_unit,
+    amount: item.servings * item.food_serving_size,
+  };
+}
+
+function editItemServings(item: EditItem): number {
+  return item.food_serving_size > 0 ? item.amount / item.food_serving_size : item.amount;
+}
+
+function editItemMacros(item: EditItem) {
+  const s = editItemServings(item);
+  return {
+    calories: Math.round(item.food_calories * s),
+    protein: Math.round(item.food_protein * s),
+    carbs: Math.round(item.food_carbs * s),
+    fat: Math.round(item.food_fat * s),
+  };
+}
+
 function MealsTab({
   meals,
   onSave,
@@ -266,21 +306,41 @@ function MealsTab({
 }) {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState("");
-  const [editItems, setEditItems] = useState<Array<SavedMealItem & { removed?: boolean }>>([]);
+  const [editItems, setEditItems] = useState<EditItem[]>([]);
   const [saving, setSaving] = useState(false);
+  const [showAddFood, setShowAddFood] = useState(false);
 
   function startEditing(meal: SavedMeal) {
     setEditingId(meal.id);
     setEditName(meal.name);
-    setEditItems(meal.items.map((item) => ({ ...item })));
+    setEditItems(meal.items.map(mealItemToEditItem));
+    setShowAddFood(false);
   }
 
-  function updateServings(idx: number, servings: number) {
-    setEditItems((prev) => prev.map((item, i) => (i === idx ? { ...item, servings } : item)));
+  function updateAmount(idx: number, amount: number) {
+    setEditItems((prev) => prev.map((item, i) => (i === idx ? { ...item, amount } : item)));
   }
 
   function removeItem(idx: number) {
     setEditItems((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function addFood(food: SearchResult) {
+    setEditItems((prev) => [
+      ...prev,
+      {
+        food_id: food.id!,
+        food_name: food.name,
+        food_calories: food.calories,
+        food_protein: food.protein,
+        food_carbs: food.carbs,
+        food_fat: food.fat,
+        food_serving_size: food.serving_size,
+        food_serving_unit: food.serving_unit,
+        amount: food.serving_size,
+      },
+    ]);
+    setShowAddFood(false);
   }
 
   async function handleSave() {
@@ -289,7 +349,7 @@ function MealsTab({
     await onSave(
       editingId!,
       editName.trim(),
-      editItems.map((item) => ({ food_id: item.food_id, servings: item.servings }))
+      editItems.map((item) => ({ food_id: item.food_id, servings: editItemServings(item) }))
     );
     setEditingId(null);
     setSaving(false);
@@ -332,35 +392,55 @@ function MealsTab({
               />
 
               <div className="space-y-1">
-                {editItems.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800 rounded-xl px-3 py-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm text-zinc-800 dark:text-zinc-200 truncate">{item.food_name}</div>
-                      <div className="text-[11px] text-zinc-400 dark:text-zinc-500">
-                        {Math.round(item.food_calories * item.servings)} cal · P{Math.round(item.food_protein * item.servings)}g C{Math.round(item.food_carbs * item.servings)}g F{Math.round(item.food_fat * item.servings)}g
+                {editItems.map((item, idx) => {
+                  const macros = editItemMacros(item);
+                  return (
+                    <div key={idx} className="flex items-center gap-2 bg-zinc-50 dark:bg-zinc-800 rounded-xl px-3 py-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-zinc-800 dark:text-zinc-200 truncate">{item.food_name}</div>
+                        <div className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                          {macros.calories} cal · P{macros.protein}g C{macros.carbs}g F{macros.fat}g
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <input
+                          type="number"
+                          min="0.1"
+                          step="any"
+                          className="w-16 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-lg px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          value={item.amount}
+                          onFocus={(e) => e.target.select()}
+                          onChange={(e) => updateAmount(idx, parseFloat(e.target.value) || 0.1)}
+                        />
+                        <span className="text-[11px] text-zinc-400 dark:text-zinc-500 min-w-[2rem]">{item.food_serving_unit}</span>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeItem(idx)}>
+                          <X className="h-3.5 w-3.5 text-zinc-400 hover:text-red-500" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <input
-                        type="number"
-                        min="0.1"
-                        step="any"
-                        className="w-16 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 rounded-lg px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                        value={item.servings}
-                        onFocus={(e) => e.target.select()}
-                        onChange={(e) => updateServings(idx, parseFloat(e.target.value) || 0.1)}
-                      />
-                      <span className="text-[11px] text-zinc-400 dark:text-zinc-500 w-8 truncate">{item.food_serving_unit}</span>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeItem(idx)}>
-                        <X className="h-3.5 w-3.5 text-zinc-400 hover:text-red-500" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {editItems.length === 0 && (
                 <p className="text-xs text-red-500 text-center py-2">A meal needs at least one item.</p>
+              )}
+
+              {showAddFood ? (
+                <div className="space-y-2">
+                  <FoodSearchInput onSelect={addFood} />
+                  <Button variant="ghost" size="sm" className="w-full" onClick={() => setShowAddFood(false)}>
+                    Cancel search
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 active:text-emerald-700 dark:active:text-emerald-300 py-2 px-1 rounded-lg hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 transition-colors"
+                  onClick={() => setShowAddFood(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Add food
+                </button>
               )}
 
               <div className="flex gap-2 justify-end">
