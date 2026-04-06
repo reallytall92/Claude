@@ -10,6 +10,7 @@ import { ServingSelector } from "./ServingSelector";
 import { ImageScanner } from "./ImageScanner";
 import { FavoriteFoods } from "./FavoriteFoods";
 import { SavedMealsList } from "./SavedMealsList";
+import { MEAL_LABELS, type Meal } from "@/lib/constants";
 
 interface QuickAddDrawerProps {
   open: boolean;
@@ -18,13 +19,6 @@ interface QuickAddDrawerProps {
   onClose: () => void;
   onAdded: (entry: object) => void;
 }
-
-const MEAL_LABELS: Record<string, string> = {
-  breakfast: "Breakfast",
-  lunch: "Lunch",
-  dinner: "Dinner",
-  snack: "Snacks",
-};
 
 export function QuickAddDrawer({ open, meal, date, onClose, onAdded }: QuickAddDrawerProps) {
   const [selectedFood, setSelectedFood] = useState<SearchResult | null>(null);
@@ -91,9 +85,9 @@ export function QuickAddDrawer({ open, meal, date, onClose, onAdded }: QuickAddD
 
   return (
     <Sheet open={open} onOpenChange={(o) => !o && handleClose()}>
-      <SheetContent side="bottom" className="h-[85vh] flex flex-col">
+      <SheetContent side="bottom" className="h-[85vh] flex flex-col md:max-w-2xl md:mx-auto md:rounded-2xl md:mb-4 md:h-[75vh]">
         <SheetHeader>
-          <SheetTitle>Add to {MEAL_LABELS[meal] ?? meal}</SheetTitle>
+          <SheetTitle>Add to {MEAL_LABELS[meal as Meal] ?? meal}</SheetTitle>
         </SheetHeader>
 
         {/* "Added!" flash */}

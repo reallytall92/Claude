@@ -73,7 +73,7 @@ export function SavedMealsList({ meal, date, onAdded }: SavedMealsListProps) {
     return (
       <div className="text-center py-12 text-zinc-400 dark:text-zinc-500 text-sm">
         <p className="font-medium text-zinc-500 dark:text-zinc-400 mb-1">No saved meals yet</p>
-        <p>Log 2+ foods to a meal, then tap &ldquo;Save as meal&rdquo; to create one.</p>
+        <p>Log two or more foods to a meal on the dashboard, then use &ldquo;Save as meal&rdquo; to reuse it later.</p>
       </div>
     );
   }
@@ -96,11 +96,12 @@ export function SavedMealsList({ meal, date, onAdded }: SavedMealsListProps) {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <span className="text-sm font-bold text-zinc-600 dark:text-zinc-400">
-                {Math.round(m.totals.calories)} <span className="font-normal text-zinc-400 dark:text-zinc-500 text-xs">kcal</span>
+                {Math.round(m.totals.calories)} <span className="font-normal text-zinc-400 dark:text-zinc-500 text-xs">cal</span>
               </span>
               <button
                 className="p-1.5 rounded-lg text-zinc-300 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
                 onClick={(e) => handleDelete(e, m.id)}
+                aria-label="Delete saved meal"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>

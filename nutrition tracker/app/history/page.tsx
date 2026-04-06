@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
+import { MEALS, MEAL_LABELS } from "@/lib/constants";
+import type { HistoryLogEntry } from "@/lib/types";
 
 interface DaySummary {
   date: string;
@@ -12,17 +14,6 @@ interface DaySummary {
   carbs: number;
   fat: number;
   entryCount: number;
-}
-
-interface LogEntry {
-  date: string;
-  meal: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  food: { name: string; brand?: string | null; serving_size: number; serving_unit: string } | null;
-  servings: number;
 }
 
 function getMonthDays(year: number, month: number): Date[] {
@@ -92,14 +83,14 @@ function WeeklySparkline({ summaries }: { summaries: Map<string, DaySummary> }) 
           <span className="font-semibold text-zinc-600 dark:text-zinc-300">
             {Math.round(days.reduce((s, d) => s + d.calories, 0) / Math.max(days.filter((d) => d.calories > 0).length, 1))}
           </span>{" "}
-          kcal
+          cal
         </span>
         <span>
           Today{" "}
           <span className="font-semibold text-emerald-600 dark:text-emerald-400">
             {Math.round(days[6].calories)}
           </span>{" "}
-          kcal
+          cal
         </span>
       </div>
     </div>
@@ -112,7 +103,9 @@ export default function HistoryPage() {
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [summaries, setSummaries] = useState<Map<string, DaySummary>>(new Map());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [dayEntries, setDayEntries] = useState<LogEntry[]>([]);
+  const [dayEntries, setDayEntries] = useState<HistoryLogEntry[]>([]);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [dayError, setDayError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMonthSummaries(viewYear, viewMonth);
@@ -123,31 +116,30 @@ export default function HistoryPage() {
   }, [selectedDate]);
 
   async function fetchMonthSummaries(year: number, month: number) {
-    const days = getMonthDays(year, month);
-    const results = await Promise.all(
-      days.map(async (d) => {
-        const dateStr = formatDate(d);
-        const res = await fetch(`/api/log?date=${dateStr}`);
-        const entries: LogEntry[] = await res.json();
-        if (entries.length === 0) return null;
-        return {
-          date: dateStr,
-          calories: entries.reduce((s, e) => s + e.calories, 0),
-          protein: entries.reduce((s, e) => s + e.protein, 0),
-          carbs: entries.reduce((s, e) => s + e.carbs, 0),
-          fat: entries.reduce((s, e) => s + e.fat, 0),
-          entryCount: entries.length,
-        } satisfies DaySummary;
-      })
-    );
-    const map = new Map<string, DaySummary>();
-    for (const r of results) if (r) map.set(r.date, r);
-    setSummaries(map);
+    setSummaryError(null);
+    try {
+      const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
+      const res = await fetch(`/api/log/summary?month=${monthStr}`);
+      if (!res.ok) throw new Error("Failed to load summary");
+      const rows: DaySummary[] = await res.json();
+      const map = new Map<string, DaySummary>();
+      for (const r of rows) map.set(r.date, r);
+      setSummaries(map);
+    } catch {
+      setSummaryError("Couldn't load history. Tap to retry.");
+    }
   }
 
   async function fetchDayEntries(date: string) {
-    const res = await fetch(`/api/log?date=${date}`);
-    setDayEntries(await res.json());
+    setDayError(null);
+    try {
+      const res = await fetch(`/api/log?date=${date}`);
+      if (!res.ok) throw new Error("Failed to load entries");
+      setDayEntries(await res.json());
+    } catch {
+      setDayError("Couldn't load this day's entries.");
+      setDayEntries([]);
+    }
   }
 
   const days = getMonthDays(viewYear, viewMonth);
@@ -161,9 +153,6 @@ export default function HistoryPage() {
     return max || 1;
   }, [summaries]);
 
-  const MEALS = ["breakfast", "lunch", "dinner", "snack"];
-  const MEAL_LABELS: Record<string, string> = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner", snack: "Snacks" };
-
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">History</h1>
@@ -171,7 +160,7 @@ export default function HistoryPage() {
       <WeeklySparkline summaries={summaries} />
 
       <div className="flex items-center justify-between">
-        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl" onClick={() => {
+        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl" aria-label="Previous month" onClick={() => {
           if (viewMonth === 0) { setViewYear((y) => y - 1); setViewMonth(11); }
           else setViewMonth((m) => m - 1);
         }}>
@@ -182,6 +171,7 @@ export default function HistoryPage() {
           variant="ghost"
           size="icon"
           className="h-10 w-10 rounded-xl"
+          aria-label="Next month"
           disabled={viewYear === today.getFullYear() && viewMonth === today.getMonth()}
           onClick={() => {
             if (viewMonth === 11) { setViewYear((y) => y + 1); setViewMonth(0); }
@@ -192,125 +182,149 @@ export default function HistoryPage() {
         </Button>
       </div>
 
-      <motion.div
-        className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <div key={d} className="text-center text-xs text-zinc-400 dark:text-zinc-500 font-medium py-1">{d}</div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-1">
-          {Array.from({ length: firstDow }).map((_, i) => <div key={`empty-${i}`} />)}
-          {days.map((day) => {
-            const dateStr = day.toISOString().split("T")[0];
-            const summary = summaries.get(dateStr);
-            const isToday = dateStr === formatDate(today);
-            const isFuture = day > today;
-            const isSelected = dateStr === selectedDate;
+      {summaryError && (
+        <motion.button
+          onClick={() => fetchMonthSummaries(viewYear, viewMonth)}
+          className="w-full bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100/80 dark:border-zinc-800/80 p-4 flex items-center gap-3 text-left"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <AlertCircle className="h-5 w-5 text-rose-500 dark:text-rose-400 shrink-0" />
+          <span className="text-sm text-rose-600 dark:text-rose-400">{summaryError}</span>
+        </motion.button>
+      )}
 
-            // Intensity-based background for days with data
-            const intensity = summary ? Math.max(0.08, Math.min(0.35, (summary.calories / maxCalInMonth) * 0.35)) : 0;
+      <div className={cn("md:grid md:gap-6 md:items-start", selectedDate ? "md:grid-cols-[1fr_1fr]" : "md:grid-cols-1")}>
+        <motion.div
+          className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+              <div key={d} className="text-center text-xs text-zinc-400 dark:text-zinc-500 font-medium py-1">{d}</div>
+            ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: firstDow }).map((_, i) => <div key={`empty-${i}`} />)}
+            {days.map((day) => {
+              const dateStr = day.toISOString().split("T")[0];
+              const summary = summaries.get(dateStr);
+              const isToday = dateStr === formatDate(today);
+              const isFuture = day > today;
+              const isSelected = dateStr === selectedDate;
 
-            return (
-              <motion.button
-                key={dateStr}
-                disabled={isFuture}
-                onClick={() => setSelectedDate(dateStr === selectedDate ? null : dateStr)}
-                className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs transition-colors relative ${
-                  isSelected
-                    ? "bg-emerald-600 dark:bg-emerald-500 text-white shadow-sm"
-                    : isFuture
-                    ? "text-zinc-200 dark:text-zinc-700 cursor-default"
-                    : isToday
-                    ? "text-emerald-700 dark:text-emerald-400 font-bold"
-                    : summary
-                    ? "text-zinc-700 dark:text-zinc-300 hover:ring-1 hover:ring-emerald-200 dark:hover:ring-emerald-800"
-                    : "text-zinc-400 dark:text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"
-                }`}
-                style={
-                  !isSelected && !isFuture && isToday
-                    ? { backgroundColor: "rgba(16, 185, 129, 0.1)" }
-                    : !isSelected && summary
-                    ? { backgroundColor: `rgba(16, 185, 129, ${intensity})` }
-                    : undefined
-                }
-                whileTap={{ scale: 0.92 }}
-                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              >
-                <span>{day.getDate()}</span>
-                {summary && !isSelected && (
-                  <span className={`text-[9px] ${isToday ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500"}`}>
-                    {Math.round(summary.calories)}
-                  </span>
-                )}
-                {isToday && !isSelected && (
-                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-500 dark:bg-emerald-400" />
-                )}
-              </motion.button>
-            );
-          })}
-        </div>
-      </motion.div>
+              // Intensity-based background for days with data
+              const intensity = summary ? Math.max(0.08, Math.min(0.35, (summary.calories / maxCalInMonth) * 0.35)) : 0;
 
-      <AnimatePresence mode="wait">
-        {selectedDate && (
-          <motion.div
-            key={selectedDate}
-            className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <div className="font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
-              {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-            </div>
+              return (
+                <motion.button
+                  key={dateStr}
+                  disabled={isFuture}
+                  onClick={() => setSelectedDate(dateStr === selectedDate ? null : dateStr)}
+                  className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs transition-colors relative ${
+                    isSelected
+                      ? "bg-emerald-600 dark:bg-emerald-500 text-white shadow-sm"
+                      : isFuture
+                      ? "text-zinc-200 dark:text-zinc-700 cursor-default"
+                      : isToday
+                      ? "text-emerald-700 dark:text-emerald-400 font-bold"
+                      : summary
+                      ? "text-zinc-700 dark:text-zinc-300 hover:ring-1 hover:ring-emerald-200 dark:hover:ring-emerald-800"
+                      : "text-zinc-400 dark:text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                  }`}
+                  style={
+                    !isSelected && !isFuture && isToday
+                      ? { backgroundColor: "rgba(16, 185, 129, 0.1)" }
+                      : !isSelected && summary
+                      ? { backgroundColor: `rgba(16, 185, 129, ${intensity})` }
+                      : undefined
+                  }
+                  whileTap={{ scale: 0.92 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                >
+                  <span>{day.getDate()}</span>
+                  {summary && !isSelected && (
+                    <span className={`text-[9px] ${isToday ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500"}`}>
+                      {Math.round(summary.calories)}
+                    </span>
+                  )}
+                  {isToday && !isSelected && (
+                    <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+        </motion.div>
 
-            {dayEntries.length === 0 ? (
-              <div className="text-sm text-zinc-400 dark:text-zinc-500 py-4 text-center">Nothing logged this day.</div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex gap-3 text-sm bg-zinc-50/80 dark:bg-zinc-800/80 rounded-xl p-3">
-                  <div className="text-center flex-1">
-                    <div className="font-bold text-zinc-800 dark:text-zinc-200">{Math.round(dayEntries.reduce((s, e) => s + e.calories, 0))}</div>
-                    <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">cal</div>
-                  </div>
-                  <div className="text-center flex-1">
-                    <div className="font-bold" style={{ color: "var(--color-protein)" }}>{Math.round(dayEntries.reduce((s, e) => s + e.protein, 0))}g</div>
-                    <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">protein</div>
-                  </div>
-                  <div className="text-center flex-1">
-                    <div className="font-bold" style={{ color: "var(--color-carbs)" }}>{Math.round(dayEntries.reduce((s, e) => s + e.carbs, 0))}g</div>
-                    <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">carbs</div>
-                  </div>
-                  <div className="text-center flex-1">
-                    <div className="font-bold" style={{ color: "var(--color-fat)" }}>{Math.round(dayEntries.reduce((s, e) => s + e.fat, 0))}g</div>
-                    <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">fat</div>
-                  </div>
+        <AnimatePresence mode="wait">
+          {selectedDate && (
+            <motion.div
+              key={selectedDate}
+              className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4 mt-4 md:mt-0 md:sticky md:top-5"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
+                {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+              </div>
+
+              {dayError ? (
+                <div className="flex items-center gap-3 py-4">
+                  <AlertCircle className="h-4 w-4 text-rose-500 dark:text-rose-400 shrink-0" />
+                  <span className="text-sm text-rose-600 dark:text-rose-400">{dayError}</span>
                 </div>
-
-                {MEALS.filter((m) => dayEntries.some((e) => e.meal === m)).map((meal) => (
-                  <div key={meal}>
-                    <div className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">{MEAL_LABELS[meal]}</div>
-                    <div className="space-y-1">
-                      {dayEntries.filter((e) => e.meal === meal).map((entry, i) => (
-                        <div key={i} className="flex items-center justify-between text-sm">
-                          <span className="text-zinc-700 dark:text-zinc-300 truncate">{entry.food?.name ?? "Unknown"}</span>
-                          <span className="text-zinc-400 dark:text-zinc-500 shrink-0 ml-2">{Math.round(entry.calories)} cal</span>
-                        </div>
-                      ))}
+              ) : dayEntries.length === 0 ? (
+                <div className="py-6 text-center">
+                  <p className="text-sm font-medium text-zinc-400 dark:text-zinc-500">No meals logged</p>
+                  <p className="text-xs text-zinc-300 dark:text-zinc-600 mt-1">Rest days count too</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex gap-3 text-sm bg-zinc-50/80 dark:bg-zinc-800/80 rounded-xl p-3">
+                    <div className="text-center flex-1">
+                      <div className="font-bold text-zinc-800 dark:text-zinc-200">{Math.round(dayEntries.reduce((s, e) => s + e.calories, 0))}</div>
+                      <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">cal</div>
+                    </div>
+                    <div className="text-center flex-1">
+                      <div className="font-bold" style={{ color: "var(--color-protein)" }}>{Math.round(dayEntries.reduce((s, e) => s + e.protein, 0))}g</div>
+                      <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">protein</div>
+                    </div>
+                    <div className="text-center flex-1">
+                      <div className="font-bold" style={{ color: "var(--color-carbs)" }}>{Math.round(dayEntries.reduce((s, e) => s + e.carbs, 0))}g</div>
+                      <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">carbs</div>
+                    </div>
+                    <div className="text-center flex-1">
+                      <div className="font-bold" style={{ color: "var(--color-fat)" }}>{Math.round(dayEntries.reduce((s, e) => s + e.fat, 0))}g</div>
+                      <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">fat</div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+                  {MEALS.filter((m) => dayEntries.some((e) => e.meal === m)).map((meal) => (
+                    <div key={meal}>
+                      <div className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">{MEAL_LABELS[meal]}</div>
+                      <div className="space-y-1">
+                        {dayEntries.filter((e) => e.meal === meal).map((entry, i) => (
+                          <div key={i} className="flex items-center justify-between text-sm">
+                            <span className="text-zinc-700 dark:text-zinc-300 truncate">{entry.food?.name ?? "Unknown"}</span>
+                            <span className="text-zinc-400 dark:text-zinc-500 shrink-0 ml-2">{Math.round(entry.calories)} cal</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }

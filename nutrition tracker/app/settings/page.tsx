@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Check, Loader2, Sun, Moon, Monitor } from "lucide-react";
+import { Check, Loader2, Sun, Moon, Monitor, AlertCircle } from "lucide-react";
 import { motion } from "motion/react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,7 @@ export default function SettingsPage() {
   const [goals, setGoals] = useState<Goals | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -83,21 +84,29 @@ export default function SettingsPage() {
     const updated = { ...goals, [key]: value };
     updated.calorie_goal = String(calcCalories(updated));
     setGoals(updated);
+    setSaveError(null);
   }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!goals) return;
     setSaving(true);
-    const res = await fetch("/api/settings", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(goals),
-    });
-    await res.json();
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setSaveError(null);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(goals),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      await res.json();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setSaveError("Couldn't save your targets. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (!goals) {
@@ -113,7 +122,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-zinc-800 dark:text-zinc-100">Settings</h1>
+      <h1 className="text-xl font-bold text-zinc-800 dark:text-zinc-100">Targets</h1>
 
       <ThemeSelector />
 
@@ -162,6 +171,13 @@ export default function SettingsPage() {
             />
           </div>
         ))}
+
+        {saveError && (
+          <div className="flex items-center gap-2 text-sm text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 rounded-xl px-3 py-2.5">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{saveError}</span>
+          </div>
+        )}
 
         <Button type="submit" className="w-full" disabled={saving}>
           {saving ? (

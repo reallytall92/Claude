@@ -67,6 +67,9 @@ function ProgressRing({
   delay = 0,
   glowColor,
   children,
+  ariaLabel,
+  ariaValueNow,
+  ariaValueMax,
 }: {
   size: number;
   strokeWidth: number;
@@ -76,6 +79,9 @@ function ProgressRing({
   delay?: number;
   glowColor?: string;
   children?: React.ReactNode;
+  ariaLabel?: string;
+  ariaValueNow?: number;
+  ariaValueMax?: number;
 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -83,7 +89,15 @@ function ProgressRing({
   const offset = circumference * (1 - clampedProgress);
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div
+      className="relative"
+      style={{ width: size, height: size }}
+      role="progressbar"
+      aria-valuenow={ariaValueNow ?? Math.round(progress * 100)}
+      aria-valuemin={0}
+      aria-valuemax={ariaValueMax ?? 100}
+      aria-label={ariaLabel}
+    >
       <svg
         width={size}
         height={size}
@@ -173,6 +187,9 @@ function MacroRing({
         gradientId={`macro-${label.toLowerCase()}`}
         delay={delay}
         glowColor={glowColor}
+        ariaLabel={`${label}: ${Math.round(value)}g of ${goal}g`}
+        ariaValueNow={Math.round(value)}
+        ariaValueMax={goal}
       >
         <AnimatedNumber
           value={Math.round(value)}
@@ -207,6 +224,8 @@ export function MacroSummary({ macros, goals }: { macros: Macros; goals?: Goals 
   const remaining = Math.max(0, CALORIE_GOAL - macros.calories);
   const calorieProgress = CALORIE_GOAL > 0 ? macros.calories / CALORIE_GOAL : 0;
   const isOver = macros.calories > CALORIE_GOAL + 50;
+  const isEmpty = macros.calories === 0 && macros.protein === 0 && macros.carbs === 0 && macros.fat === 0;
+  const goalReached = !isOver && calorieProgress >= 1;
 
   return (
     <motion.div
@@ -225,20 +244,44 @@ export function MacroSummary({ macros, goals }: { macros: Macros; goals?: Goals 
             color={isOver ? "var(--color-fat)" : "var(--color-calories)"}
             gradientId="calorie-ring"
             glowColor={isOver ? "rgba(244,63,94,0.12)" : "rgba(16,185,129,0.12)"}
+            ariaLabel={`Calories: ${Math.round(macros.calories)} of ${CALORIE_GOAL}`}
+            ariaValueNow={Math.round(macros.calories)}
+            ariaValueMax={CALORIE_GOAL}
           >
             <AnimatedNumber
               value={Math.round(macros.calories)}
               className="text-[26px] font-extrabold text-zinc-900 dark:text-zinc-100 leading-none tracking-tight"
             />
             <span className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-1">
-              kcal
+              cal
             </span>
           </ProgressRing>
 
           {/* Remaining label */}
           <div className="text-center mt-1.5">
             <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500">
-              {isOver ? (
+              {goalReached ? (
+                <motion.span
+                  className="text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="shrink-0">
+                    <motion.path
+                      d="M2.5 6L5 8.5L9.5 3.5"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      initial={{ pathLength: 0 }}
+                      animate={{ pathLength: 1 }}
+                      transition={{ duration: 0.4, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                  </svg>
+                  Goal reached
+                </motion.span>
+              ) : isOver ? (
                 <span className="text-rose-500 dark:text-rose-400">
                   +{Math.round(macros.calories - CALORIE_GOAL)} over
                 </span>
@@ -264,6 +307,18 @@ export function MacroSummary({ macros, goals }: { macros: Macros; goals?: Goals 
           ))}
         </div>
       </div>
+
+      {/* Empty state hint */}
+      {isEmpty && (
+        <motion.p
+          className="text-sm text-zinc-400 dark:text-zinc-500 text-center mt-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        >
+          Log your first meal to see your progress
+        </motion.p>
+      )}
     </motion.div>
   );
 }

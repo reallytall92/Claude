@@ -58,6 +58,7 @@ export default function FoodsPage() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [meals, setMeals] = useState<SavedMeal[]>([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   useEffect(() => { fetchFoods(); fetchMeals(); }, []);
 
@@ -81,7 +82,6 @@ export default function FoodsPage() {
   }
 
   async function deleteMeal(id: number) {
-    if (!confirm("Delete this saved meal?")) return;
     await fetch(`/api/saved-meals/${id}`, { method: "DELETE" });
     setMeals((prev) => prev.filter((m) => m.id !== id));
   }
@@ -97,9 +97,9 @@ export default function FoodsPage() {
   }
 
   async function deleteFood(id: number) {
-    if (!confirm("Delete this food?")) return;
     await fetch(`/api/foods/${id}`, { method: "DELETE" });
     setFoods((prev) => prev.filter((f) => f.id !== id));
+    setConfirmDeleteId(null);
   }
 
   const filtered = foods.filter((f) => {
@@ -198,6 +198,9 @@ export default function FoodsPage() {
                   onFavorite={toggleFavorite}
                   onEdit={() => setEditingId(food.id)}
                   onDelete={() => deleteFood(food.id)}
+                  confirmingDelete={confirmDeleteId === food.id}
+                  onRequestDelete={() => setConfirmDeleteId(food.id)}
+                  onCancelDelete={() => setConfirmDeleteId(null)}
                 />
               </motion.div>
             )
@@ -213,44 +216,78 @@ function FoodRow({
   onFavorite,
   onEdit,
   onDelete,
+  confirmingDelete,
+  onRequestDelete,
+  onCancelDelete,
 }: {
   food: Food;
   onFavorite: (f: Food) => void;
   onEdit: () => void;
   onDelete: () => void;
+  confirmingDelete: boolean;
+  onRequestDelete: () => void;
+  onCancelDelete: () => void;
 }) {
   return (
-    <div className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm px-4 py-3 flex items-center gap-3">
-      <button onClick={() => onFavorite(food)} className="shrink-0">
-        <motion.div whileTap={{ scale: 1.3 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
-          <Star
-            className={`h-4 w-4 transition-colors ${food.is_favorite ? "text-amber-400 fill-amber-400" : "text-zinc-200 dark:text-zinc-700 hover:text-amber-300 dark:hover:text-amber-400"}`}
-          />
-        </motion.div>
-      </button>
+    <div className="bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm px-4 py-3 space-y-2">
+      <div className="flex items-center gap-3">
+        <button onClick={() => onFavorite(food)} className="shrink-0" aria-label={food.is_favorite ? "Remove from favorites" : "Add to favorites"}>
+          <motion.div whileTap={{ scale: 1.3 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
+            <Star
+              className={`h-4 w-4 transition-colors ${food.is_favorite ? "text-amber-400 fill-amber-400" : "text-zinc-200 dark:text-zinc-700 hover:text-amber-300 dark:hover:text-amber-400"}`}
+            />
+          </motion.div>
+        </button>
 
-      <div className="flex-1 min-w-0">
-        <div className="font-medium text-zinc-800 dark:text-zinc-200 text-sm truncate">{food.name}</div>
-        <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
-          {food.brand && <span className="mr-1.5">{food.brand} ·</span>}
-          {food.serving_size}{food.serving_unit}
-          {food.default_servings != null && food.default_servings > 0 && (
-            <span className="text-emerald-500 dark:text-emerald-400"> · default {food.default_servings}{food.default_unit ?? food.serving_unit}</span>
-          )}
-          {" "}·{" "}
-          <span className="font-medium text-zinc-600 dark:text-zinc-400">{Math.round(food.calories)} cal</span>
-          <span className="ml-1.5">P{food.protein}g C{food.carbs}g F{food.fat}g</span>
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-zinc-800 dark:text-zinc-200 text-sm truncate">{food.name}</div>
+          <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
+            {food.brand && <span className="mr-1.5">{food.brand} ·</span>}
+            {food.serving_size}{food.serving_unit}
+            {food.default_servings != null && food.default_servings > 0 && (
+              <span className="text-emerald-500 dark:text-emerald-400"> · default {food.default_servings}{food.default_unit ?? food.serving_unit}</span>
+            )}
+            {" "}·{" "}
+            <span className="font-medium text-zinc-600 dark:text-zinc-400">{Math.round(food.calories)} cal</span>
+            <span className="ml-1.5">P{food.protein}g C{food.carbs}g F{food.fat}g</span>
+          </div>
+        </div>
+
+        <div className="flex gap-0.5 shrink-0">
+          <Button variant="ghost" size="icon" onClick={onEdit} className="h-8 w-8" aria-label="Edit food">
+            <Pencil className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={onRequestDelete} className="h-8 w-8" aria-label="Delete food">
+            <Trash2 className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
+          </Button>
         </div>
       </div>
 
-      <div className="flex gap-0.5 shrink-0">
-        <Button variant="ghost" size="icon" onClick={onEdit} className="h-8 w-8">
-          <Pencil className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={onDelete} className="h-8 w-8">
-          <Trash2 className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
-        </Button>
-      </div>
+      <AnimatePresence>
+        {confirmingDelete && (
+          <motion.div
+            className="flex items-center justify-between gap-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl px-3 py-2"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate">Delete {food.name}?</span>
+            <div className="flex gap-2 shrink-0">
+              <Button variant="ghost" size="sm" onClick={onCancelDelete} className="h-7 px-2.5 text-xs">
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={onDelete}
+                className="h-7 px-2.5 text-xs bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white"
+              >
+                Delete
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -309,6 +346,7 @@ function MealsTab({
   const [editItems, setEditItems] = useState<EditItem[]>([]);
   const [saving, setSaving] = useState(false);
   const [showAddFood, setShowAddFood] = useState(false);
+  const [confirmDeleteMealId, setConfirmDeleteMealId] = useState<number | null>(null);
 
   function startEditing(meal: SavedMeal) {
     setEditingId(meal.id);
@@ -413,7 +451,7 @@ function MealsTab({
                           onChange={(e) => updateAmount(idx, parseFloat(e.target.value) || 0.1)}
                         />
                         <span className="text-[11px] text-zinc-400 dark:text-zinc-500 min-w-[2rem]">{item.food_serving_unit}</span>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeItem(idx)}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" aria-label="Remove item" onClick={() => removeItem(idx)}>
                           <X className="h-3.5 w-3.5 text-zinc-400 hover:text-red-500" />
                         </Button>
                       </div>
@@ -462,10 +500,10 @@ function MealsTab({
                   </div>
                 </div>
                 <div className="flex gap-0.5 shrink-0">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => startEditing(meal)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Edit meal" onClick={() => startEditing(meal)}>
                     <Pencil className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(meal.id)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Delete meal" onClick={() => setConfirmDeleteMealId(meal.id)}>
                     <Trash2 className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
                   </Button>
                 </div>
@@ -477,6 +515,31 @@ function MealsTab({
                 <span>F {Math.round(meal.totals.fat)}g</span>
                 <span>{meal.items.length} items</span>
               </div>
+              <AnimatePresence>
+                {confirmDeleteMealId === meal.id && (
+                  <motion.div
+                    className="flex items-center justify-between gap-3 mt-2 bg-rose-50 dark:bg-rose-950/40 rounded-xl px-3 py-2"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate">Delete {meal.name}?</span>
+                    <div className="flex gap-2 shrink-0">
+                      <Button variant="ghost" size="sm" onClick={() => setConfirmDeleteMealId(null)} className="h-7 px-2.5 text-xs">
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => { onDelete(meal.id); setConfirmDeleteMealId(null); }}
+                        className="h-7 px-2.5 text-xs bg-red-500 hover:bg-red-600 dark:bg-red-500 dark:hover:bg-red-600 text-white"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </>
           )}
         </motion.div>

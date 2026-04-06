@@ -8,22 +8,45 @@ import { todayStr } from "@/lib/utils";
 export async function GET(req: NextRequest) {
   const date = req.nextUrl.searchParams.get("date") ?? todayStr();
 
-  const entries = await db.query.log_entries.findMany({
-    where: (e, { eq }) => eq(e.date, date),
-    with: { food_id: false },
-    orderBy: (e, { asc }) => asc(e.created_at),
-  });
-
-  // Also fetch associated food names
-  const withFoods = await Promise.all(
-    entries.map(async (entry) => {
-      if (!entry.food_id) return { ...entry, food: null };
-      const food = await db.query.foods.findFirst({
-        where: (f, { eq }) => eq(f.id, entry.food_id!),
-      });
-      return { ...entry, food: food ?? null };
+  const rows = await db
+    .select({
+      id: log_entries.id,
+      food_id: log_entries.food_id,
+      date: log_entries.date,
+      meal: log_entries.meal,
+      servings: log_entries.servings,
+      calories: log_entries.calories,
+      protein: log_entries.protein,
+      carbs: log_entries.carbs,
+      fat: log_entries.fat,
+      notes: log_entries.notes,
+      created_at: log_entries.created_at,
+      food_name: foods.name,
+      food_brand: foods.brand,
+      food_serving_size: foods.serving_size,
+      food_serving_unit: foods.serving_unit,
     })
-  );
+    .from(log_entries)
+    .leftJoin(foods, eq(log_entries.food_id, foods.id))
+    .where(eq(log_entries.date, date))
+    .orderBy(log_entries.created_at);
+
+  const withFoods = rows.map((r) => ({
+    id: r.id,
+    food_id: r.food_id,
+    date: r.date,
+    meal: r.meal,
+    servings: r.servings,
+    calories: r.calories,
+    protein: r.protein,
+    carbs: r.carbs,
+    fat: r.fat,
+    notes: r.notes,
+    created_at: r.created_at,
+    food: r.food_name
+      ? { name: r.food_name, brand: r.food_brand, serving_size: r.food_serving_size, serving_unit: r.food_serving_unit }
+      : null,
+  }));
 
   return NextResponse.json(withFoods);
 }

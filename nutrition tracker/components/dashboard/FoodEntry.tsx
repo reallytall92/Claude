@@ -3,18 +3,7 @@ import { useState } from "react";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
-
-interface LogEntryWithFood {
-  id: number;
-  food_id: number | null;
-  meal: string;
-  servings: number;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  food: { name: string; brand?: string | null; serving_size: number; serving_unit: string } | null;
-}
+import type { LogEntryWithFood } from "@/lib/types";
 
 interface FoodEntryProps {
   entry: LogEntryWithFood;
@@ -85,7 +74,7 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
         <div className="flex gap-0.5 shrink-0">
           {editing ? (
             <>
-              <Button variant="ghost" size="icon" onClick={handleSave} className="h-7 w-7">
+              <Button variant="ghost" size="icon" onClick={handleSave} className="h-7 w-7" aria-label="Save servings">
                 <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
               </Button>
               <Button
@@ -93,16 +82,17 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
                 size="icon"
                 onClick={() => { setServings(String(entry.servings)); setEditing(false); }}
                 className="h-7 w-7"
+                aria-label="Cancel editing"
               >
                 <X className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
               </Button>
             </>
           ) : (
             <>
-              <Button variant="ghost" size="icon" onClick={() => setEditing(true)} className="h-7 w-7">
+              <Button variant="ghost" size="icon" onClick={() => setEditing(true)} className="h-7 w-7" aria-label="Edit servings">
                 <Pencil className="h-3 w-3 text-zinc-300 dark:text-zinc-600" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => onDelete(entry.id)} className="h-7 w-7">
+              <Button variant="ghost" size="icon" onClick={() => onDelete(entry.id)} className="h-7 w-7" aria-label="Delete entry">
                 <Trash2 className="h-3 w-3 text-zinc-300 dark:text-zinc-600" />
               </Button>
             </>

@@ -1,26 +1,14 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { AlertCircle } from "lucide-react";
 import { DayHeader } from "@/components/dashboard/DayHeader";
 import { MacroSummary } from "@/components/dashboard/MacroSummary";
 import { MealSection } from "@/components/dashboard/MealSection";
 import { QuickAddDrawer } from "@/components/quick-add/QuickAddDrawer";
 import { todayStr, formatDate } from "@/lib/utils";
-
-const MEALS = ["breakfast", "lunch", "dinner", "snack"] as const;
-type Meal = (typeof MEALS)[number];
-
-interface LogEntry {
-  id: number;
-  food_id: number | null;
-  meal: string;
-  servings: number;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  food: { name: string; brand?: string | null; serving_size: number; serving_unit: string } | null;
-}
+import { MEALS } from "@/lib/constants";
+import type { LogEntryWithFood } from "@/lib/types";
 
 function stepDate(dateStr: string, days: number): string {
   const d = new Date(dateStr + "T00:00:00");
@@ -66,10 +54,11 @@ function MealSectionSkeleton() {
 
 export default function DashboardPage() {
   const [date, setDate] = useState(todayStr());
-  const [entries, setEntries] = useState<LogEntry[]>([]);
+  const [entries, setEntries] = useState<LogEntryWithFood[]>([]);
   const [loading, setLoading] = useState(true);
   const [drawerMeal, setDrawerMeal] = useState<string | null>(null);
   const [goals, setGoals] = useState<{ calories: number; protein: number; carbs: number; fat: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -79,15 +68,22 @@ export default function DashboardPage() {
         protein: Number(s.protein_goal),
         carbs: Number(s.carbs_goal),
         fat: Number(s.fat_goal),
-      }));
+      }))
+      .catch(() => {
+        // Goals are optional — fallback defaults are used in MacroSummary
+      });
   }, []);
 
   const fetchEntries = useCallback(async (d: string) => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/log?date=${d}`);
+      if (!res.ok) throw new Error("Failed to load entries");
       const data = await res.json();
       setEntries(data);
+    } catch {
+      setError("Couldn't load your meals. Tap to retry.");
     } finally {
       setLoading(false);
     }
@@ -123,7 +119,7 @@ export default function DashboardPage() {
   }
 
   function handleAdded(entry: object) {
-    setEntries((prev) => [...prev, entry as LogEntry]);
+    setEntries((prev) => [...prev, entry as LogEntryWithFood]);
   }
 
   async function handleSaveMeal(name: string, items: Array<{ food_id: number; servings: number }>) {
@@ -136,26 +132,43 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4">
+      <h1 className="sr-only">Today&apos;s Nutrition</h1>
       <DayHeader
         date={date}
         onPrev={() => setDate((d) => stepDate(d, -1))}
         onNext={() => setDate((d) => stepDate(d, 1))}
       />
 
+      {error && !loading && (
+        <motion.button
+          onClick={() => fetchEntries(date)}
+          className="w-full bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100/80 dark:border-zinc-800/80 p-4 flex items-center gap-3 text-left"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <AlertCircle className="h-5 w-5 text-rose-500 dark:text-rose-400 shrink-0" />
+          <span className="text-sm text-rose-600 dark:text-rose-400">{error}</span>
+        </motion.button>
+      )}
+
       {loading ? (
-        <>
+        <div className="md:grid md:grid-cols-[minmax(0,auto)_1fr] md:gap-6 md:items-start">
           <MacroSummarySkeleton />
-          <div className="space-y-3">
+          <div className="space-y-3 mt-4 md:mt-0">
             {MEALS.map((_, i) => (
               <MealSectionSkeleton key={i} />
             ))}
           </div>
-        </>
-      ) : (
-        <>
-          <MacroSummary macros={totalMacros} goals={goals ?? undefined} />
+        </div>
+      ) : !error ? (
+        <div className="md:grid md:grid-cols-[minmax(0,auto)_1fr] md:gap-6 md:items-start">
+          <div className="md:sticky md:top-5">
+            <MacroSummary macros={totalMacros} goals={goals ?? undefined} />
+          </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 mt-4 md:mt-0">
             {MEALS.map((meal, i) => (
               <motion.div
                 key={meal}
@@ -178,8 +191,8 @@ export default function DashboardPage() {
               </motion.div>
             ))}
           </div>
-        </>
-      )}
+        </div>
+      ) : null}
 
       {drawerMeal && (
         <QuickAddDrawer
