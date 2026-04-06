@@ -156,6 +156,7 @@ function MacroRing({
   delay: number;
 }) {
   const progress = goal > 0 ? value / goal : 0;
+  const isOver = value > goal + 25;
 
   return (
     <motion.div
@@ -168,7 +169,7 @@ function MacroRing({
         size={52}
         strokeWidth={5}
         progress={progress}
-        color={color}
+        color={isOver ? "var(--color-fat)" : color}
         gradientId={`macro-${label.toLowerCase()}`}
         delay={delay}
         glowColor={glowColor}
@@ -205,7 +206,7 @@ export function MacroSummary({ macros, goals }: { macros: Macros; goals?: Goals 
   };
   const remaining = Math.max(0, CALORIE_GOAL - macros.calories);
   const calorieProgress = CALORIE_GOAL > 0 ? macros.calories / CALORIE_GOAL : 0;
-  const isOver = macros.calories > CALORIE_GOAL;
+  const isOver = macros.calories > CALORIE_GOAL + 50;
 
   return (
     <motion.div
