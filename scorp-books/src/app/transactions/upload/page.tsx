@@ -374,23 +374,23 @@ export default function UploadPage() {
               )}
 
               {/* Transactions */}
-              <div className="space-y-1">
+              <div className="space-y-px">
                 {stmt.transactions.map((txn, txnIndex) => (
-                  <Card key={txnIndex} className={txn.excluded ? "opacity-40" : ""}>
-                    <CardContent className="flex items-center gap-4 py-3 px-4">
+                  <Card key={txnIndex} className={`rounded-none first:rounded-t-lg last:rounded-b-lg border-x border-t-0 first:border-t border-b last:border-b ${txn.excluded ? "opacity-40" : ""}`}>
+                    <CardContent className="flex items-center gap-3 py-2 px-4">
                       <div className="w-20 text-sm text-muted-foreground shrink-0">
                         {formatDate(txn.date)}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 overflow-hidden">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium truncate">{txn.description}</p>
+                          <p className="font-medium truncate text-sm">{txn.description}</p>
                           {txn.isDuplicate && (
                             <Badge variant="outline" className="text-amber-500 border-amber-500/30 text-xs gap-1 shrink-0">
                               <CopyMinus className="size-3" /> Duplicate
                             </Badge>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground truncate">{txn.rawDescription}</p>
+                        <p className="text-xs text-muted-foreground truncate max-w-full">{txn.rawDescription}</p>
                       </div>
                       {!txn.excluded && (
                         <div className="shrink-0">
@@ -401,7 +401,7 @@ export default function UploadPage() {
                           />
                         </div>
                       )}
-                      <div className={`w-24 text-right font-mono text-sm shrink-0 ${txn.type === "credit" ? "text-green-600 dark:text-green-400" : ""}`}>
+                      <div className={`w-28 text-right font-mono text-sm shrink-0 ${txn.type === "credit" ? "text-green-600 dark:text-green-400" : ""}`}>
                         {txn.type === "credit" ? "+" : "-"}{formatCurrency(txn.amount)}
                       </div>
                       <Button

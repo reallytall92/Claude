@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { classificationRules, chartOfAccounts } from "@/lib/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { classificationRules, chartOfAccounts, transactions } from "@/lib/db/schema";
+import { eq, desc, isNull, inArray } from "drizzle-orm";
 
 export async function GET() {
   const rules = await db
@@ -34,11 +34,58 @@ export async function POST(request: Request) {
     })
     .returning();
 
-  return NextResponse.json(result[0]);
+  // Count unclassified transactions that match this rule (don't apply yet)
+  const unclassified = await db
+    .select({ id: transactions.id, description: transactions.description })
+    .from(transactions)
+    .where(isNull(transactions.categoryId));
+
+  const pattern = data.pattern.toLowerCase();
+  const pendingCount = unclassified
+    .filter((t) => t.description.toLowerCase().includes(pattern))
+    .length;
+
+  return NextResponse.json({ ...result[0], pendingCount });
 }
 
 export async function PATCH(request: Request) {
   const data = await request.json();
+
+  // Apply a rule retroactively to unclassified transactions
+  if (data.action === "apply") {
+    const rule = await db
+      .select()
+      .from(classificationRules)
+      .where(eq(classificationRules.id, Number(data.id)))
+      .limit(1);
+
+    if (rule.length === 0) {
+      return NextResponse.json({ error: "Rule not found" }, { status: 404 });
+    }
+
+    const unclassified = await db
+      .select({ id: transactions.id, description: transactions.description })
+      .from(transactions)
+      .where(isNull(transactions.categoryId));
+
+    const pattern = rule[0].pattern.toLowerCase();
+    const matchingIds = unclassified
+      .filter((t) => t.description.toLowerCase().includes(pattern))
+      .map((t) => t.id);
+
+    if (matchingIds.length > 0) {
+      await db
+        .update(transactions)
+        .set({
+          categoryId: rule[0].categoryId,
+          classificationSource: "rule",
+        })
+        .where(inArray(transactions.id, matchingIds));
+    }
+
+    return NextResponse.json({ ok: true, applied: matchingIds.length });
+  }
+
   const updates: Record<string, unknown> = {};
   if (data.pattern !== undefined) updates.pattern = data.pattern;
   if (data.categoryId !== undefined) updates.categoryId = Number(data.categoryId);

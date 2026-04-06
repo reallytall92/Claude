@@ -10,11 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CategoryPicker } from "@/components/category-picker";
 import { toast } from "sonner";
-import { CircleCheck, Circle, ShieldCheck } from "lucide-react";
+import { CircleCheck, Circle, ShieldCheck, ChevronLeft, ChevronRight, LayoutList, CreditCard, Eye, EyeOff } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 type Transaction = {
   id: number;
@@ -51,7 +53,7 @@ function formatDate(dateStr: string) {
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [counts, setCounts] = useState({ all: 0, needsReview: 0, reconciled: 0 });
+  const [counts, setCounts] = useState({ all: 0, needsReview: 0, needsVerification: 0, reconciled: 0 });
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("all");
   const [accounts, setAccounts] = useState<BankAccount[]>([]);
@@ -66,8 +68,20 @@ export default function TransactionsPage() {
   const [newAccountId, setNewAccountId] = useState("");
   const [newType, setNewType] = useState("debit");
 
+  // View mode
+  const [viewMode, setViewMode] = useState<"list" | "card">("list");
+  const [cardIndex, setCardIndex] = useState(0);
+  const [showRaw, setShowRaw] = useState(false);
+
   // Rule suggestions cache
   const [suggestions, setSuggestions] = useState<Record<number, number | null>>({});
+
+  // Rule confirmation dialog
+  const [ruleConfirm, setRuleConfirm] = useState<{
+    ruleId: number;
+    pendingCount: number;
+    categoryName: string;
+  } | null>(null);
 
   const loadTransactions = useCallback(async () => {
     const params = new URLSearchParams({ tab });
@@ -90,6 +104,35 @@ export default function TransactionsPage() {
       .then((r) => r.json())
       .then(setAccounts);
   }, []);
+
+  // Reset card index when filters/data change
+  useEffect(() => {
+    setCardIndex(0);
+    setShowRaw(false);
+  }, [tab, filterAccount, search]);
+
+  // Clamp card index when transactions shrink
+  useEffect(() => {
+    if (cardIndex >= transactions.length && transactions.length > 0) {
+      setCardIndex(transactions.length - 1);
+    }
+  }, [transactions.length, cardIndex]);
+
+  // Keyboard navigation for card view
+  useEffect(() => {
+    if (viewMode !== "card") return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setViewMode("list");
+      } else if (e.key === "ArrowLeft") {
+        setCardIndex((i) => Math.max(0, i - 1));
+      } else if (e.key === "ArrowRight") {
+        setCardIndex((i) => Math.min(transactions.length - 1, i + 1));
+      }
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [viewMode, transactions.length]);
 
   // Check for rule suggestions for unclassified transactions
   useEffect(() => {
@@ -133,7 +176,7 @@ export default function TransactionsPage() {
     // Try to get the company/merchant name
     const pattern = desc.length > 30 ? desc.substring(0, 30) : desc;
 
-    await fetch("/api/rules", {
+    const res = await fetch("/api/rules", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -142,11 +185,46 @@ export default function TransactionsPage() {
         transactionId,
       }),
     });
+    const result = await res.json();
 
-    toast("Rule saved! Similar transactions will be auto-suggested next time.");
+    if (result.pendingCount > 0) {
+      const catName = txn.categoryName || "this category";
+      setRuleConfirm({
+        ruleId: result.id,
+        pendingCount: result.pendingCount,
+        categoryName: catName,
+      });
+    } else {
+      toast("Rule saved! Similar transactions will be auto-classified next time.");
+    }
+  }
+
+  async function handleApplyRule() {
+    if (!ruleConfirm) return;
+    const res = await fetch("/api/rules", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: ruleConfirm.ruleId, action: "apply" }),
+    });
+    const result = await res.json();
+    setRuleConfirm(null);
+    toast(`Auto-classified ${result.applied} transaction${result.applied !== 1 ? "s" : ""}.`);
+    loadTransactions();
+  }
+
+  function handleSkipApplyRule() {
+    setRuleConfirm(null);
+    toast("Rule saved! Similar transactions will be auto-classified next time.");
   }
 
   async function handleVerify(transactionId: number) {
+    // Optimistic: show green immediately
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === transactionId ? { ...t, classificationSource: "verified" } : t
+      )
+    );
+
     await fetch("/api/transactions", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -161,15 +239,25 @@ export default function TransactionsPage() {
 
   async function handleApproveAll() {
     if (unverifiedRuleTransactions.length === 0) return;
+    const count = unverifiedRuleTransactions.length;
+    const ids = new Set(unverifiedRuleTransactions.map((t) => t.id));
+
+    // Optimistic: flip all to green immediately
+    setTransactions((prev) =>
+      prev.map((t) =>
+        ids.has(t.id) ? { ...t, classificationSource: "verified" } : t
+      )
+    );
+    toast(`Approved ${count} auto-classified transaction${count !== 1 ? "s" : ""}.`);
+
     await fetch("/api/transactions", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "bulk_verify",
-        ids: unverifiedRuleTransactions.map((t) => t.id),
+        ids: [...ids],
       }),
     });
-    toast(`Approved ${unverifiedRuleTransactions.length} auto-classified transaction${unverifiedRuleTransactions.length !== 1 ? "s" : ""}.`);
     loadTransactions();
   }
 
@@ -318,10 +406,16 @@ export default function TransactionsPage() {
               <Badge variant="destructive" className="ml-1.5 text-xs">{counts.needsReview}</Badge>
             )}
           </TabsTrigger>
+          <TabsTrigger value="needs_verification">
+            Needs Verification
+            {counts.needsVerification > 0 && (
+              <Badge variant="outline" className="ml-1.5 text-xs border-amber-500 text-amber-500">{counts.needsVerification}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="reconciled">Reconciled ({counts.reconciled})</TabsTrigger>
         </TabsList>
 
-        <div className="flex gap-3 mt-4">
+        <div className="flex gap-3 mt-4 items-center">
           <Input
             placeholder="Search transactions..."
             value={search}
@@ -337,6 +431,22 @@ export default function TransactionsPage() {
               ))}
             </SelectContent>
           </Select>
+          <div className="ml-auto flex rounded-lg border border-border p-0.5">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`rounded-md p-1.5 transition-colors ${viewMode === "list" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              aria-label="List view"
+            >
+              <LayoutList className="size-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("card")}
+              className={`rounded-md p-1.5 transition-colors ${viewMode === "card" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              aria-label="Card view"
+            >
+              <CreditCard className="size-4" />
+            </button>
+          </div>
         </div>
 
         <TabsContent value={tab} className="mt-4">
@@ -350,19 +460,166 @@ export default function TransactionsPage() {
                 </p>
               </CardContent>
             </Card>
+          ) : viewMode === "card" ? (
+            (() => {
+              const txn = transactions[cardIndex];
+              if (!txn) return null;
+              const workflowState = !txn.categoryId
+                ? "needs-review"
+                : txn.classificationSource === "rule"
+                  ? "needs-verification"
+                  : "verified";
+              return (
+                <div className="fixed inset-0 z-40 flex items-center justify-center p-8 bg-background/80 backdrop-blur-sm" onClick={() => setViewMode("list")}>
+                <div className="flex items-center gap-6 w-full max-w-[44rem]" onClick={(e) => e.stopPropagation()}>
+                  {/* Left arrow */}
+                  <Button
+                    variant="outline"
+                    size="icon-lg"
+                    onClick={() => { setCardIndex((i) => Math.max(0, i - 1)); setShowRaw(false); }}
+                    disabled={cardIndex === 0}
+                    aria-label="Previous transaction"
+                    className="shrink-0 text-foreground"
+                  >
+                    <ChevronLeft className="size-5" />
+                  </Button>
+
+                  {/* Card */}
+                  <Card className={cn(
+                    "flex-1 shadow-lg transition-all overflow-hidden",
+                    workflowState === "needs-review" && "ring-2 ring-destructive/30 border-destructive/20",
+                    workflowState === "needs-verification" && "ring-2 ring-amber-500/30 border-amber-500/20",
+                    workflowState === "verified" && "ring-1 ring-border/60",
+                  )}>
+                    <CardContent className="p-0">
+                      {/* Status bar + counter */}
+                      <div className="flex items-center justify-between px-6 pt-4 pb-0">
+                        <Badge
+                          variant={workflowState === "needs-review" ? "destructive" : workflowState === "needs-verification" ? "outline" : "secondary"}
+                          className={cn(
+                            "text-xs",
+                            workflowState === "needs-verification" && "border-amber-500 text-amber-600 dark:text-amber-400",
+                            workflowState === "verified" && "text-green-600 dark:text-green-400",
+                          )}
+                        >
+                          {workflowState === "needs-review" && "Needs Review"}
+                          {workflowState === "needs-verification" && "Auto-classified"}
+                          {workflowState === "verified" && "Verified"}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {cardIndex + 1} of {transactions.length}
+                        </span>
+                      </div>
+
+                      {/* Hero: title + amount */}
+                      <div className="px-6 pt-5 pb-4 text-center space-y-1">
+                        <h2 className="text-xl font-semibold tracking-tight">{txn.description}</h2>
+                        <p className={cn(
+                          "text-4xl font-bold tracking-tight tabular-nums",
+                          txn.type === "credit"
+                            ? "text-green-600 dark:text-green-400"
+                            : "text-foreground"
+                        )}>
+                          {txn.type === "credit" ? "+" : "\u2212"}{formatCurrency(txn.amount)}
+                        </p>
+                        <p className="text-sm text-muted-foreground pt-1">
+                          {txn.type === "credit" ? "Money In" : "Money Out"}
+                          <span className="mx-1.5 text-border">&middot;</span>
+                          {formatDate(txn.date)}
+                          <span className="mx-1.5 text-border">&middot;</span>
+                          {txn.accountName}
+                        </p>
+                      </div>
+
+                      {/* Raw bank text toggle + reconciled */}
+                      <div className="px-6 pb-4 space-y-2">
+                        {txn.rawDescription && txn.rawDescription !== txn.description && (
+                          <>
+                            <button
+                              onClick={() => setShowRaw(!showRaw)}
+                              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              {showRaw ? <EyeOff className="size-3.5 text-muted-foreground" /> : <Eye className="size-3.5 text-muted-foreground" />}
+                              {showRaw ? "Hide" : "Show"} bank text
+                            </button>
+                            {showRaw && (
+                              <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground font-mono leading-relaxed break-all">
+                                {txn.rawDescription}
+                              </div>
+                            )}
+                          </>
+                        )}
+
+                        {txn.reconciled && (
+                          <Badge variant="outline" className="text-xs">Reconciled</Badge>
+                        )}
+                      </div>
+
+                      {/* Classification — the primary action */}
+                      <div className="border-t bg-muted/30 px-6 py-5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-semibold">
+                            {workflowState === "needs-review" && "Classify this transaction"}
+                            {workflowState === "needs-verification" && "Review classification"}
+                            {workflowState === "verified" && "Classification"}
+                          </p>
+                          {txn.classificationSource === "rule" && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleVerify(txn.id)}
+                              className="gap-1.5 border-green-600 text-green-600 hover:bg-green-500/10 dark:border-green-400 dark:text-green-400"
+                            >
+                              <CircleCheck className="size-4" />
+                              Approve
+                            </Button>
+                          )}
+                          {txn.classificationSource === "verified" && (
+                            <span className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400 font-medium">
+                              <CircleCheck className="size-4" />
+                              Approved
+                            </span>
+                          )}
+                        </div>
+                        <CategoryPicker
+                          value={txn.categoryId}
+                          categoryName={txn.categoryName}
+                          suggestedCategoryId={suggestions[txn.id] ?? null}
+                          onSelect={(catId) => handleClassify(txn.id, catId)}
+                          onSaveRule={(catId) => handleSaveRule(txn.id, catId)}
+                          fullWidth
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Right arrow */}
+                  <Button
+                    variant="outline"
+                    size="icon-lg"
+                    onClick={() => { setCardIndex((i) => Math.min(transactions.length - 1, i + 1)); setShowRaw(false); }}
+                    disabled={cardIndex === transactions.length - 1}
+                    aria-label="Next transaction"
+                    className="shrink-0 text-foreground"
+                  >
+                    <ChevronRight className="size-5" />
+                  </Button>
+                </div>
+                </div>
+              );
+            })()
           ) : (
-            <div className="space-y-1">
-              {transactions.map((txn) => (
-                <Card key={txn.id} className="hover:bg-accent/50 transition-colors">
-                  <CardContent className="flex items-center gap-4 py-3 px-4">
+            <div className="space-y-px">
+              {transactions.map((txn, idx) => (
+                <Card key={txn.id} className="hover:bg-accent/50 transition-colors cursor-pointer rounded-none first:rounded-t-lg last:rounded-b-lg border-x border-t-0 first:border-t border-b last:border-b" onClick={() => { setCardIndex(idx); setViewMode("card"); setShowRaw(false); }}>
+                  <CardContent className="flex items-center gap-3 py-2 px-4">
                     <div className="w-20 text-sm text-muted-foreground shrink-0">
                       {formatDate(txn.date)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{txn.description}</p>
-                      <p className="text-xs text-muted-foreground">{txn.accountName}</p>
+                      <p className="font-medium truncate text-sm">{txn.description} <span className="font-normal text-muted-foreground">· {txn.accountName}</span></p>
                     </div>
-                    <div className="shrink-0 flex items-center gap-1.5">
+                    <div className="shrink-0 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                       {txn.classificationSource === "rule" && (
                         <TooltipProvider delay={300}>
                           <Tooltip>
@@ -398,7 +655,7 @@ export default function TransactionsPage() {
                         onSaveRule={(catId) => handleSaveRule(txn.id, catId)}
                       />
                     </div>
-                    <div className={`w-24 text-right font-mono text-sm shrink-0 ${txn.type === "credit" ? "text-green-600 dark:text-green-400" : ""}`}>
+                    <div className={`w-28 text-right font-mono text-sm shrink-0 ${txn.type === "credit" ? "text-green-600 dark:text-green-400" : ""}`}>
                       {txn.type === "credit" ? "+" : "-"}{formatCurrency(txn.amount)}
                     </div>
                     {txn.reconciled && (
@@ -411,6 +668,27 @@ export default function TransactionsPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Rule auto-classify confirmation */}
+      <Dialog open={!!ruleConfirm} onOpenChange={(open) => { if (!open) handleSkipApplyRule(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Apply rule to existing transactions?</DialogTitle>
+            <DialogDescription>
+              {ruleConfirm?.pendingCount} uncategorized transaction{ruleConfirm?.pendingCount !== 1 ? "s" : ""} match{ruleConfirm?.pendingCount === 1 ? "es" : ""} this
+              rule and would be classified as <span className="font-medium text-foreground">{ruleConfirm?.categoryName}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end pt-2">
+            <Button variant="outline" onClick={handleSkipApplyRule}>
+              No, just save the rule
+            </Button>
+            <Button onClick={handleApplyRule}>
+              Yes, classify {ruleConfirm?.pendingCount} transaction{ruleConfirm?.pendingCount !== 1 ? "s" : ""}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -16,6 +16,8 @@ export async function GET(request: Request) {
 
   if (tab === "needs_review") {
     conditions.push(isNull(transactions.categoryId));
+  } else if (tab === "needs_verification") {
+    conditions.push(eq(transactions.classificationSource, "rule"));
   } else if (tab === "reconciled") {
     conditions.push(eq(transactions.reconciled, true));
   }
@@ -66,6 +68,7 @@ export async function GET(request: Request) {
   // Get counts for tabs
   const allCount = await db.select().from(transactions);
   const needsReview = allCount.filter((t) => t.categoryId === null);
+  const needsVerification = allCount.filter((t) => t.classificationSource === "rule");
   const reconciled = allCount.filter((t) => t.reconciled);
 
   return NextResponse.json({
@@ -78,6 +81,7 @@ export async function GET(request: Request) {
     counts: {
       all: allCount.length,
       needsReview: needsReview.length,
+      needsVerification: needsVerification.length,
       reconciled: reconciled.length,
     },
   });

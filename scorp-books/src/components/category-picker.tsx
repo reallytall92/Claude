@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, memo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
@@ -31,25 +31,43 @@ type Category = {
   isActive: boolean;
 };
 
+// Module-level cache: fetched once, shared across all CategoryPicker instances
+let _cachedCategories: Category[] | null = null;
+let _fetchPromise: Promise<Category[]> | null = null;
+
+function getCategories(): Promise<Category[]> {
+  if (_cachedCategories) return Promise.resolve(_cachedCategories);
+  if (!_fetchPromise) {
+    _fetchPromise = fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data: Category[]) => {
+        _cachedCategories = data.filter((c) => c.isActive);
+        return _cachedCategories;
+      });
+  }
+  return _fetchPromise;
+}
+
 type CategoryPickerProps = {
   value: number | null;
   categoryName?: string | null;
   suggestedCategoryId?: number | null;
   onSelect: (categoryId: number | null) => void;
   onSaveRule?: (categoryId: number) => void;
+  fullWidth?: boolean;
 };
 
-const groupIcons: Record<string, LucideIcon> = {
-  "Income": DollarSign,
-  "Salary & Payroll": Briefcase,
-  "Insurance & Licenses": Shield,
-  "Education & Dues": GraduationCap,
-  "Office & Tech": Monitor,
-  "Other Expenses": Receipt,
-  "Bank Accounts": Landmark,
-  "Property & Equipment": Building2,
-  "Money You Owe": Receipt,
-  "Owner's Equity": PiggyBank,
+const groupIcons: Record<string, { icon: LucideIcon; color: string }> = {
+  "Income": { icon: DollarSign, color: "text-green-500" },
+  "Salary & Payroll": { icon: Briefcase, color: "text-blue-500" },
+  "Insurance & Licenses": { icon: Shield, color: "text-amber-500" },
+  "Education & Dues": { icon: GraduationCap, color: "text-violet-500" },
+  "Office & Tech": { icon: Monitor, color: "text-cyan-500" },
+  "Other Expenses": { icon: Receipt, color: "text-orange-500" },
+  "Bank Accounts": { icon: Landmark, color: "text-emerald-500" },
+  "Property & Equipment": { icon: Building2, color: "text-rose-500" },
+  "Money You Owe": { icon: Receipt, color: "text-red-500" },
+  "Owner's Equity": { icon: PiggyBank, color: "text-teal-500" },
 };
 
 export function CategoryPicker({
@@ -58,6 +76,7 @@ export function CategoryPicker({
   suggestedCategoryId,
   onSelect,
   onSaveRule,
+  fullWidth,
 }: CategoryPickerProps) {
   const [open, setOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -66,58 +85,70 @@ export function CategoryPicker({
 
   useEffect(() => {
     if (open && !loaded) {
-      fetch("/api/categories")
-        .then((r) => r.json())
-        .then((data) => {
-          setCategories(data.filter((c: Category) => c.isActive));
-          setLoaded(true);
-        });
+      getCategories().then((data) => {
+        setCategories(data);
+        setLoaded(true);
+      });
     }
   }, [open, loaded]);
 
   // Frequently used categories shown at top (by account code)
-  const frequentCodes = new Set(["4010", "5010", "5020", "3040", "5030", "5080", "5110"]);
+  const frequentCodes = useMemo(() => new Set(["4010", "5010", "5020", "3040", "5030", "5080", "5110"]), []);
 
-  const visible = categories;
-
-  const frequentCats = visible.filter((c) => frequentCodes.has(c.code));
-  const restCats = visible.filter((c) => !frequentCodes.has(c.code));
-
-  // Group the remaining categories for display
-  const grouped = restCats.reduce<Record<string, Category[]>>((acc, cat) => {
-    const g = cat.group || "Other";
-    if (!acc[g]) acc[g] = [];
-    acc[g].push(cat);
-    return acc;
-  }, {});
+  const { frequentCats, grouped } = useMemo(() => {
+    const freq = categories.filter((c) => frequentCodes.has(c.code));
+    const rest = categories.filter((c) => !frequentCodes.has(c.code));
+    const g = rest.reduce<Record<string, Category[]>>((acc, cat) => {
+      const group = cat.group || "Other";
+      if (!acc[group]) acc[group] = [];
+      acc[group].push(cat);
+      return acc;
+    }, {});
+    return { frequentCats: freq, grouped: g };
+  }, [categories, frequentCodes]);
 
   const suggestedCategory = suggestedCategoryId
     ? categories.find((c) => c.id === suggestedCategoryId)
     : null;
 
+  const handleSelect = useCallback((catId: number | null) => {
+    onSelect(catId);
+    setOpen(false);
+  }, [onSelect]);
+
   return (
-    <div className="flex items-center gap-2">
+    <div className={fullWidth ? "space-y-2" : "flex items-center gap-2"}>
       {suggestedCategory && !value && (
         <Button
           variant="outline"
-          size="sm"
-          className="text-xs border-dashed"
+          size={fullWidth ? "default" : "sm"}
+          className={fullWidth ? "w-full border-dashed text-sm justify-start" : "text-xs border-dashed"}
           onClick={() => onSelect(suggestedCategory.id)}
         >
           Suggested: {suggestedCategory.friendlyName}
         </Button>
       )}
 
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button
+        variant={fullWidth ? "default" : "outline"}
+        size={fullWidth ? "lg" : "sm"}
+        onClick={() => setOpen(true)}
+        onMouseEnter={() => getCategories()}
+        className={fullWidth ? "w-full text-base justify-center gap-2" : ""}
+      >
         {value && categoryName ? (
-          <Badge variant="secondary" className="text-xs">{categoryName}</Badge>
+          fullWidth ? (
+            <span>{categoryName}</span>
+          ) : (
+            <Badge variant="secondary" className="text-xs">{categoryName}</Badge>
+          )
         ) : (
-          <span className="text-muted-foreground">Pick a category...</span>
+          <span className={fullWidth ? "text-primary-foreground/80" : "text-muted-foreground"}>Pick a category...</span>
         )}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md max-h-[80vh] p-0 gap-0 overflow-hidden flex flex-col rounded-xl" showCloseButton={false}>
+        <DialogContent className="max-w-md max-h-[60vh] p-0 gap-0 overflow-hidden flex flex-col rounded-xl shadow-xl ring-1 ring-border" showCloseButton={false}>
           <Command className="border-none" loop>
             <div className="px-4 pt-4 pb-1">
               <DialogHeader className="pb-3">
@@ -126,17 +157,14 @@ export function CategoryPicker({
               <CommandInput placeholder="Search categories..." />
             </div>
             <CommandSeparator />
-            <CommandList className="flex-1 overflow-y-auto px-2 py-2 max-h-[60vh]">
+            <CommandList className="flex-1 overflow-y-auto px-2 py-2 max-h-[40vh] [transform:translateZ(0)]">
               <CommandEmpty className="py-12 text-center">
                 <span className="text-sm text-muted-foreground">No matching category found.</span>
               </CommandEmpty>
               {value && (
                 <CommandGroup>
                   <CommandItem
-                    onSelect={() => {
-                      onSelect(null);
-                      setOpen(false);
-                    }}
+                    onSelect={() => handleSelect(null)}
                     className="rounded-lg"
                   >
                     <XCircle className="size-4 text-muted-foreground" />
@@ -145,33 +173,29 @@ export function CategoryPicker({
                 </CommandGroup>
               )}
               {frequentCats.length > 0 && (
-                <CommandGroup heading={<span className="flex items-center gap-1.5"><Star className="size-3" />Frequently Used</span>}>
+                <CommandGroup heading={<span className="flex items-center gap-1.5"><Star className="size-3 text-muted-foreground" />Frequently Used</span>}>
                   {frequentCats.map((cat) => (
                     <CategoryItem
                       key={cat.id}
                       cat={cat}
                       isSelected={value === cat.id}
-                      onSelect={() => {
-                        onSelect(cat.id);
-                        setOpen(false);
-                      }}
+                      onSelect={handleSelect}
                     />
                   ))}
                 </CommandGroup>
               )}
               {Object.entries(grouped).map(([group, cats]) => {
-                const Icon = groupIcons[group] || CircleDot;
+                const g = groupIcons[group];
+                const Icon = g?.icon || CircleDot;
+                const iconColor = g?.color || "text-muted-foreground";
                 return (
-                  <CommandGroup key={group} heading={<span className="flex items-center gap-1.5"><Icon className="size-3" />{group}</span>}>
+                  <CommandGroup key={group} heading={<span className="flex items-center gap-1.5"><Icon className={`size-3 ${iconColor}`} />{group}</span>}>
                     {cats.map((cat) => (
                       <CategoryItem
                         key={cat.id}
                         cat={cat}
                         isSelected={value === cat.id}
-                        onSelect={() => {
-                          onSelect(cat.id);
-                          setOpen(false);
-                        }}
+                        onSelect={handleSelect}
                       />
                     ))}
                   </CommandGroup>
@@ -184,12 +208,12 @@ export function CategoryPicker({
 
       {value && onSaveRule && (
         ruleSaved ? (
-          <span className="text-xs text-muted-foreground">Rule saved</span>
+          <span className={fullWidth ? "text-sm text-muted-foreground" : "text-xs text-muted-foreground"}>Rule saved</span>
         ) : (
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs"
+            className={fullWidth ? "text-sm" : "text-xs"}
             onClick={() => {
               onSaveRule(value);
               setRuleSaved(true);
@@ -203,19 +227,19 @@ export function CategoryPicker({
   );
 }
 
-function CategoryItem({
+const CategoryItem = memo(function CategoryItem({
   cat,
   isSelected,
   onSelect,
 }: {
   cat: Category;
   isSelected: boolean;
-  onSelect: () => void;
+  onSelect: (catId: number | null) => void;
 }) {
   return (
     <CommandItem
       value={`${cat.friendlyName} ${cat.description || ""}`}
-      onSelect={onSelect}
+      onSelect={() => onSelect(cat.id)}
       className="rounded-lg px-3 py-2.5"
       data-checked={isSelected || undefined}
     >
@@ -227,4 +251,4 @@ function CategoryItem({
       </div>
     </CommandItem>
   );
-}
+});
