@@ -71,8 +71,8 @@ export function SavedMealsList({ meal, date, onAdded }: SavedMealsListProps) {
 
   if (meals.length === 0) {
     return (
-      <div className="text-center py-12 text-zinc-400 text-sm">
-        <p className="font-medium text-zinc-500 mb-1">No saved meals yet</p>
+      <div className="text-center py-12 text-zinc-400 dark:text-zinc-500 text-sm">
+        <p className="font-medium text-zinc-500 dark:text-zinc-400 mb-1">No saved meals yet</p>
         <p>Log 2+ foods to a meal, then tap &ldquo;Save as meal&rdquo; to create one.</p>
       </div>
     );
@@ -83,30 +83,30 @@ export function SavedMealsList({ meal, date, onAdded }: SavedMealsListProps) {
       {meals.map((m) => (
         <button
           key={m.id}
-          className="w-full text-left rounded-xl border border-zinc-100 bg-white p-4 active:bg-zinc-50 transition-colors disabled:opacity-50"
+          className="w-full text-left rounded-xl border border-zinc-100 dark:border-zinc-800 bg-white dark:bg-[--color-surface] p-4 active:bg-zinc-50 dark:active:bg-zinc-800 transition-colors disabled:opacity-50"
           onClick={() => handleLog(m.id)}
           disabled={loggingId !== null}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-zinc-800 truncate">{m.name}</p>
-              <p className="text-xs text-zinc-400 mt-0.5">
+              <p className="font-semibold text-zinc-800 dark:text-zinc-200 truncate">{m.name}</p>
+              <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">
                 {m.items.map((item) => item.food_name).join(", ")}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span className="text-sm font-bold text-zinc-600">
-                {Math.round(m.totals.calories)} <span className="font-normal text-zinc-400 text-xs">kcal</span>
+              <span className="text-sm font-bold text-zinc-600 dark:text-zinc-400">
+                {Math.round(m.totals.calories)} <span className="font-normal text-zinc-400 dark:text-zinc-500 text-xs">kcal</span>
               </span>
               <button
-                className="p-1.5 rounded-lg text-zinc-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                className="p-1.5 rounded-lg text-zinc-300 dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
                 onClick={(e) => handleDelete(e, m.id)}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
-          <div className="flex gap-3 mt-2 text-xs text-zinc-400">
+          <div className="flex gap-3 mt-2 text-xs text-zinc-400 dark:text-zinc-500">
             <span>P {Math.round(m.totals.protein)}g</span>
             <span>C {Math.round(m.totals.carbs)}g</span>
             <span>F {Math.round(m.totals.fat)}g</span>

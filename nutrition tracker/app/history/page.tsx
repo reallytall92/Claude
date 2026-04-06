@@ -55,8 +55,8 @@ function WeeklySparkline({ summaries }: { summaries: Map<string, DaySummary> }) 
   const maxCal = Math.max(...days.map((d) => d.calories), 1);
 
   return (
-    <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-4">
-      <div className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+    <div className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4">
+      <div className="text-xs font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-3">
         Last 7 days
       </div>
       <div className="flex items-end gap-1.5 h-16">
@@ -68,31 +68,35 @@ function WeeklySparkline({ summaries }: { summaries: Map<string, DaySummary> }) 
               <motion.div
                 className="w-full rounded-md"
                 style={{
-                  backgroundColor: isToday ? "#10b981" : day.calories > 0 ? "#a7f3d0" : "#f1f5f9",
+                  backgroundColor: isToday
+                    ? "var(--color-calories)"
+                    : day.calories > 0
+                    ? "rgba(16, 185, 129, 0.3)"
+                    : "var(--color-ring-track)",
                   minHeight: 4,
                 }}
                 initial={{ height: 4 }}
                 animate={{ height: `${Math.max(pct * 48, 4)}px` }}
                 transition={{ duration: 0.6, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
               />
-              <span className={`text-[9px] font-medium ${isToday ? "text-emerald-600" : "text-zinc-400"}`}>
+              <span className={`text-[9px] font-medium ${isToday ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500"}`}>
                 {day.label}
               </span>
             </div>
           );
         })}
       </div>
-      <div className="flex justify-between mt-2 text-[10px] text-zinc-400">
+      <div className="flex justify-between mt-2 text-[10px] text-zinc-400 dark:text-zinc-500">
         <span>
           Avg{" "}
-          <span className="font-semibold text-zinc-600">
+          <span className="font-semibold text-zinc-600 dark:text-zinc-300">
             {Math.round(days.reduce((s, d) => s + d.calories, 0) / Math.max(days.filter((d) => d.calories > 0).length, 1))}
           </span>{" "}
           kcal
         </span>
         <span>
           Today{" "}
-          <span className="font-semibold text-emerald-600">
+          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
             {Math.round(days[6].calories)}
           </span>{" "}
           kcal
@@ -162,7 +166,7 @@ export default function HistoryPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-bold text-zinc-900">History</h1>
+      <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">History</h1>
 
       <WeeklySparkline summaries={summaries} />
 
@@ -173,7 +177,7 @@ export default function HistoryPage() {
         }}>
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <span className="font-semibold text-zinc-800">{monthName}</span>
+        <span className="font-semibold text-zinc-800 dark:text-zinc-200">{monthName}</span>
         <Button
           variant="ghost"
           size="icon"
@@ -189,14 +193,14 @@ export default function HistoryPage() {
       </div>
 
       <motion.div
-        className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-4"
+        className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="grid grid-cols-7 gap-1 mb-2">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-            <div key={d} className="text-center text-xs text-zinc-400 font-medium py-1">{d}</div>
+            <div key={d} className="text-center text-xs text-zinc-400 dark:text-zinc-500 font-medium py-1">{d}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-1">
@@ -218,14 +222,14 @@ export default function HistoryPage() {
                 onClick={() => setSelectedDate(dateStr === selectedDate ? null : dateStr)}
                 className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs transition-colors relative ${
                   isSelected
-                    ? "bg-emerald-600 text-white shadow-sm"
+                    ? "bg-emerald-600 dark:bg-emerald-500 text-white shadow-sm"
                     : isFuture
-                    ? "text-zinc-200 cursor-default"
+                    ? "text-zinc-200 dark:text-zinc-700 cursor-default"
                     : isToday
-                    ? "text-emerald-700 font-bold"
+                    ? "text-emerald-700 dark:text-emerald-400 font-bold"
                     : summary
-                    ? "text-zinc-700 hover:ring-1 hover:ring-emerald-200"
-                    : "text-zinc-400 hover:bg-zinc-50"
+                    ? "text-zinc-700 dark:text-zinc-300 hover:ring-1 hover:ring-emerald-200 dark:hover:ring-emerald-800"
+                    : "text-zinc-400 dark:text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"
                 }`}
                 style={
                   !isSelected && !isFuture && isToday
@@ -239,12 +243,12 @@ export default function HistoryPage() {
               >
                 <span>{day.getDate()}</span>
                 {summary && !isSelected && (
-                  <span className={`text-[9px] ${isToday ? "text-emerald-500" : "text-zinc-400"}`}>
+                  <span className={`text-[9px] ${isToday ? "text-emerald-500 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500"}`}>
                     {Math.round(summary.calories)}
                   </span>
                 )}
                 {isToday && !isSelected && (
-                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-500" />
+                  <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                 )}
               </motion.button>
             );
@@ -256,47 +260,47 @@ export default function HistoryPage() {
         {selectedDate && (
           <motion.div
             key={selectedDate}
-            className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-4"
+            className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm p-4"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           >
-            <div className="font-semibold text-zinc-800 mb-3">
+            <div className="font-semibold text-zinc-800 dark:text-zinc-200 mb-3">
               {new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
             </div>
 
             {dayEntries.length === 0 ? (
-              <div className="text-sm text-zinc-400 py-4 text-center">Nothing logged this day.</div>
+              <div className="text-sm text-zinc-400 dark:text-zinc-500 py-4 text-center">Nothing logged this day.</div>
             ) : (
               <div className="space-y-4">
-                <div className="flex gap-3 text-sm bg-zinc-50/80 rounded-xl p-3">
+                <div className="flex gap-3 text-sm bg-zinc-50/80 dark:bg-zinc-800/80 rounded-xl p-3">
                   <div className="text-center flex-1">
-                    <div className="font-bold text-zinc-800">{Math.round(dayEntries.reduce((s, e) => s + e.calories, 0))}</div>
-                    <div className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">cal</div>
+                    <div className="font-bold text-zinc-800 dark:text-zinc-200">{Math.round(dayEntries.reduce((s, e) => s + e.calories, 0))}</div>
+                    <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">cal</div>
                   </div>
                   <div className="text-center flex-1">
-                    <div className="font-bold" style={{ color: "#3b82f6" }}>{Math.round(dayEntries.reduce((s, e) => s + e.protein, 0))}g</div>
-                    <div className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">protein</div>
+                    <div className="font-bold" style={{ color: "var(--color-protein)" }}>{Math.round(dayEntries.reduce((s, e) => s + e.protein, 0))}g</div>
+                    <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">protein</div>
                   </div>
                   <div className="text-center flex-1">
-                    <div className="font-bold" style={{ color: "#f59e0b" }}>{Math.round(dayEntries.reduce((s, e) => s + e.carbs, 0))}g</div>
-                    <div className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">carbs</div>
+                    <div className="font-bold" style={{ color: "var(--color-carbs)" }}>{Math.round(dayEntries.reduce((s, e) => s + e.carbs, 0))}g</div>
+                    <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">carbs</div>
                   </div>
                   <div className="text-center flex-1">
-                    <div className="font-bold" style={{ color: "#f43f5e" }}>{Math.round(dayEntries.reduce((s, e) => s + e.fat, 0))}g</div>
-                    <div className="text-[10px] text-zinc-400 font-medium uppercase tracking-wider">fat</div>
+                    <div className="font-bold" style={{ color: "var(--color-fat)" }}>{Math.round(dayEntries.reduce((s, e) => s + e.fat, 0))}g</div>
+                    <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wider">fat</div>
                   </div>
                 </div>
 
                 {MEALS.filter((m) => dayEntries.some((e) => e.meal === m)).map((meal) => (
                   <div key={meal}>
-                    <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">{MEAL_LABELS[meal]}</div>
+                    <div className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1.5">{MEAL_LABELS[meal]}</div>
                     <div className="space-y-1">
                       {dayEntries.filter((e) => e.meal === meal).map((entry, i) => (
                         <div key={i} className="flex items-center justify-between text-sm">
-                          <span className="text-zinc-700 truncate">{entry.food?.name ?? "Unknown"}</span>
-                          <span className="text-zinc-400 shrink-0 ml-2">{Math.round(entry.calories)} cal</span>
+                          <span className="text-zinc-700 dark:text-zinc-300 truncate">{entry.food?.name ?? "Unknown"}</span>
+                          <span className="text-zinc-400 dark:text-zinc-500 shrink-0 ml-2">{Math.round(entry.calories)} cal</span>
                         </div>
                       ))}
                     </div>

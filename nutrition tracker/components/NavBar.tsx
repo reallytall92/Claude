@@ -30,13 +30,13 @@ export function NavBar() {
               href={href}
               className={cn(
                 "relative flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors",
-                active ? "text-emerald-600" : "text-zinc-400"
+                active ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500"
               )}
             >
               {active && (
                 <motion.span
                   layoutId="nav-indicator"
-                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-emerald-500 rounded-full"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-emerald-500 dark:bg-emerald-400 rounded-full"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
@@ -54,7 +54,7 @@ export function NavBar() {
               <span
                 className={cn(
                   "text-[10px] font-semibold tracking-wide transition-colors duration-200",
-                  active ? "text-emerald-600" : "text-zinc-400"
+                  active ? "text-emerald-600 dark:text-emerald-400" : "text-zinc-400 dark:text-zinc-500"
                 )}
               >
                 {label}

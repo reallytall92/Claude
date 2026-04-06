@@ -33,9 +33,9 @@ export function MealSection({ meal, entries, onAddFood, onDeleteEntry, onUpdateE
   const canSave = onSaveMeal && savableItems.length >= 2;
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 overflow-hidden">
+    <div className="bg-white dark:bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100 dark:border-zinc-800 overflow-hidden">
       <button
-        className="w-full flex items-center justify-between px-5 py-4 active:bg-zinc-50/80 transition-colors"
+        className="w-full flex items-center justify-between px-5 py-4 active:bg-zinc-50/80 dark:active:bg-zinc-800/80 transition-colors"
         onClick={() => setOpen((o) => !o)}
       >
         <div className="flex items-center gap-2">
@@ -43,17 +43,17 @@ export function MealSection({ meal, entries, onAddFood, onDeleteEntry, onUpdateE
             animate={{ rotate: open ? 0 : -90 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
           >
-            <ChevronDown className="h-4 w-4 text-zinc-400" />
+            <ChevronDown className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
           </motion.div>
-          <span className="font-bold text-zinc-800">{MEAL_LABELS[meal]}</span>
+          <span className="font-bold text-zinc-800 dark:text-zinc-200">{MEAL_LABELS[meal]}</span>
           {entries.length > 0 && (
-            <span className="text-xs text-zinc-400 font-medium bg-zinc-100 px-1.5 py-0.5 rounded-full">
+            <span className="text-xs text-zinc-400 dark:text-zinc-500 font-medium bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-full">
               {entries.length}
             </span>
           )}
         </div>
-        <span className="text-sm font-bold text-zinc-600">
-          {Math.round(totalCal)} <span className="font-normal text-zinc-400 text-xs">kcal</span>
+        <span className="text-sm font-bold text-zinc-600 dark:text-zinc-400">
+          {Math.round(totalCal)} <span className="font-normal text-zinc-400 dark:text-zinc-500 text-xs">kcal</span>
         </span>
       </button>
 
@@ -68,7 +68,7 @@ export function MealSection({ meal, entries, onAddFood, onDeleteEntry, onUpdateE
           >
             <div className="px-4 pb-3">
               {entries.length > 0 && (
-                <div className="divide-y divide-zinc-50">
+                <div className="divide-y divide-zinc-50 dark:divide-zinc-800">
                   {entries.map((entry) => (
                     <FoodEntry
                       key={entry.id}
@@ -82,7 +82,7 @@ export function MealSection({ meal, entries, onAddFood, onDeleteEntry, onUpdateE
 
               <div className="mt-2 flex items-center gap-3">
                 <button
-                  className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600 active:text-emerald-700 py-2 px-1 rounded-lg hover:bg-emerald-50/60 transition-colors"
+                  className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 active:text-emerald-700 dark:active:text-emerald-300 py-2 px-1 rounded-lg hover:bg-emerald-50/60 dark:hover:bg-emerald-950/40 transition-colors"
                   onClick={() => onAddFood(meal)}
                 >
                   <Plus className="h-4 w-4" />
@@ -90,7 +90,7 @@ export function MealSection({ meal, entries, onAddFood, onDeleteEntry, onUpdateE
                 </button>
                 {canSave && (
                   <button
-                    className="flex items-center gap-1.5 text-sm font-medium text-zinc-400 active:text-zinc-600 py-2 px-1 rounded-lg hover:bg-zinc-50 transition-colors"
+                    className="flex items-center gap-1.5 text-sm font-medium text-zinc-400 dark:text-zinc-500 active:text-zinc-600 dark:active:text-zinc-300 py-2 px-1 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
                     onClick={() => {
                       const name = window.prompt("Name this meal:");
                       if (name?.trim()) onSaveMeal(name.trim(), savableItems);

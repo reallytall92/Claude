@@ -18,9 +18,9 @@ interface Goals {
 }
 
 const MACRO_CONFIG = [
-  { key: "protein" as const, label: "Protein", color: "#3b82f6", glowColor: "rgba(59,130,246,0.15)" },
-  { key: "carbs" as const, label: "Carbs", color: "#f59e0b", glowColor: "rgba(245,158,11,0.15)" },
-  { key: "fat" as const, label: "Fat", color: "#f43f5e", glowColor: "rgba(244,63,94,0.15)" },
+  { key: "protein" as const, label: "Protein", color: "var(--color-protein)", glowColor: "rgba(59,130,246,0.15)" },
+  { key: "carbs" as const, label: "Carbs", color: "var(--color-carbs)", glowColor: "rgba(245,158,11,0.15)" },
+  { key: "fat" as const, label: "Fat", color: "var(--color-fat)", glowColor: "rgba(244,63,94,0.15)" },
 ];
 
 /* ─── Animated number counter ─── */
@@ -104,7 +104,7 @@ function ProgressRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#f1f5f9"
+          stroke="var(--color-ring-track)"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
@@ -175,12 +175,12 @@ function MacroRing({
       >
         <AnimatedNumber
           value={Math.round(value)}
-          className="text-[11px] font-bold text-zinc-800 leading-none"
+          className="text-[11px] font-bold text-zinc-800 dark:text-zinc-200 leading-none"
         />
       </ProgressRing>
 
       <div className="min-w-0">
-        <div className="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider leading-none">
+        <div className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider leading-none">
           {label}
         </div>
         <div className="mt-0.5 flex items-baseline gap-1">
@@ -188,7 +188,7 @@ function MacroRing({
             <AnimatedNumber value={Math.round(value)} />
             <span className="text-[10px] font-semibold">g</span>
           </span>
-          <span className="text-[10px] text-zinc-300 font-medium">/ {goal}g</span>
+          <span className="text-[10px] text-zinc-300 dark:text-zinc-600 font-medium">/ {goal}g</span>
         </div>
       </div>
     </motion.div>
@@ -209,7 +209,7 @@ export function MacroSummary({ macros, goals }: { macros: Macros; goals?: Goals 
 
   return (
     <motion.div
-      className="bg-white rounded-2xl shadow-sm border border-zinc-100/80 p-5"
+      className="bg-white dark:bg-[--color-surface] rounded-2xl shadow-sm border border-zinc-100/80 dark:border-zinc-800/80 p-5"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
@@ -221,24 +221,24 @@ export function MacroSummary({ macros, goals }: { macros: Macros; goals?: Goals 
             size={128}
             strokeWidth={10}
             progress={calorieProgress}
-            color={isOver ? "#f43f5e" : "#10b981"}
+            color={isOver ? "var(--color-fat)" : "var(--color-calories)"}
             gradientId="calorie-ring"
             glowColor={isOver ? "rgba(244,63,94,0.12)" : "rgba(16,185,129,0.12)"}
           >
             <AnimatedNumber
               value={Math.round(macros.calories)}
-              className="text-[26px] font-extrabold text-zinc-900 leading-none tracking-tight"
+              className="text-[26px] font-extrabold text-zinc-900 dark:text-zinc-100 leading-none tracking-tight"
             />
-            <span className="text-[9px] font-semibold text-zinc-400 uppercase tracking-widest mt-1">
+            <span className="text-[9px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-1">
               kcal
             </span>
           </ProgressRing>
 
           {/* Remaining label */}
           <div className="text-center mt-1.5">
-            <span className="text-[10px] font-semibold text-zinc-400">
+            <span className="text-[10px] font-semibold text-zinc-400 dark:text-zinc-500">
               {isOver ? (
-                <span className="text-rose-500">
+                <span className="text-rose-500 dark:text-rose-400">
                   +{Math.round(macros.calories - CALORIE_GOAL)} over
                 </span>
               ) : (

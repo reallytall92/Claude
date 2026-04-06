@@ -60,20 +60,20 @@ export function ImageScanner({ onScanned }: ImageScannerProps) {
 
   return (
     <div>
-      <p className="text-sm text-zinc-500 mb-4">
+      <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
         Take a photo of a nutrition facts label and we&apos;ll extract the info automatically.
       </p>
 
       {loading ? (
-        <div className="border-2 border-dashed border-zinc-200 rounded-2xl p-8 text-center">
-          <div className="flex flex-col items-center gap-3 text-zinc-400">
-            <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <div className="border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl p-8 text-center">
+          <div className="flex flex-col items-center gap-3 text-zinc-400 dark:text-zinc-500">
+            <Loader2 className="h-8 w-8 animate-spin text-emerald-500 dark:text-emerald-400" />
             <span className="text-sm">Reading nutrition label...</span>
           </div>
         </div>
       ) : preview ? (
         <div
-          className="border-2 border-dashed border-zinc-200 rounded-2xl p-8 text-center hover:border-emerald-400 transition-colors cursor-pointer"
+          className="border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl p-8 text-center hover:border-emerald-400 dark:hover:border-emerald-600 transition-colors cursor-pointer"
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
           onClick={() => libraryRef.current?.click()}
@@ -81,19 +81,19 @@ export function ImageScanner({ onScanned }: ImageScannerProps) {
           <div className="space-y-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={preview} alt="Preview" className="max-h-48 mx-auto rounded-xl object-contain" />
-            <p className="text-xs text-zinc-400">Tap to choose a different image</p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-500">Tap to choose a different image</p>
           </div>
         </div>
       ) : (
         <div
-          className="border-2 border-dashed border-zinc-200 rounded-2xl p-8 text-center"
+          className="border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-2xl p-8 text-center"
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
         >
-          <div className="flex flex-col items-center gap-3 text-zinc-400">
+          <div className="flex flex-col items-center gap-3 text-zinc-400 dark:text-zinc-500">
             <Camera className="h-10 w-10" />
             <div>
-              <div className="text-sm font-medium text-zinc-600">Scan a nutrition label</div>
+              <div className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Scan a nutrition label</div>
               <div className="text-xs mt-1">JPG, PNG, HEIC supported</div>
             </div>
           </div>
@@ -119,7 +119,7 @@ export function ImageScanner({ onScanned }: ImageScannerProps) {
       />
 
       {error && (
-        <div className="mt-3 flex items-center gap-2 text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">
+        <div className="mt-3 flex items-center gap-2 text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 rounded-xl px-3 py-2">
           <AlertCircle className="h-4 w-4 shrink-0" />
           {error}
         </div>

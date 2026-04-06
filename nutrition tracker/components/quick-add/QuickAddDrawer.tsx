@@ -104,7 +104,7 @@ export function QuickAddDrawer({ open, meal, date, onClose, onAdded }: QuickAddD
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.2 }}
-              className="mx-6 mb-2 flex items-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700"
+              className="mx-6 mb-2 flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950 px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400"
             >
               <Check className="h-4 w-4" />
               {addedName} added

@@ -70,7 +70,7 @@ export default function FoodsPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-zinc-800">Food Library</h1>
+        <h1 className="text-xl font-bold text-zinc-800 dark:text-zinc-100">Food Library</h1>
         <Button size="sm" onClick={() => setShowAddForm(true)}>
           <Plus className="h-4 w-4" />
           Add custom
@@ -95,19 +95,19 @@ export default function FoodsPage() {
       </AnimatePresence>
 
       {/* Tab bar with animated indicator */}
-      <div className="relative flex gap-1 bg-zinc-100 p-1 rounded-xl">
+      <div className="relative flex gap-1 bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
         {(["all", "custom", "favorites"] as Tab[]).map((t) => (
           <button
             key={t}
             className={`relative flex-1 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors z-10 ${
-              tab === t ? "text-zinc-900" : "text-zinc-500"
+              tab === t ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-500 dark:text-zinc-400"
             }`}
             onClick={() => setTab(t)}
           >
             {tab === t && (
               <motion.div
                 layoutId="foods-tab-bg"
-                className="absolute inset-0 bg-white shadow rounded-lg"
+                className="absolute inset-0 bg-white dark:bg-zinc-700 shadow rounded-lg"
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
             )}
@@ -123,8 +123,8 @@ export default function FoodsPage() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <UtensilsCrossed className="h-10 w-10 text-zinc-200 mx-auto mb-3" />
-          <p className="text-zinc-400 text-sm">
+          <UtensilsCrossed className="h-10 w-10 text-zinc-200 dark:text-zinc-700 mx-auto mb-3" />
+          <p className="text-zinc-400 dark:text-zinc-500 text-sm">
             {tab === "favorites" ? "No favorites yet — star a food to save it here." : "No foods found."}
           </p>
         </motion.div>
@@ -175,35 +175,35 @@ function FoodRow({
   onDelete: () => void;
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm px-4 py-3 flex items-center gap-3">
+    <div className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm px-4 py-3 flex items-center gap-3">
       <button onClick={() => onFavorite(food)} className="shrink-0">
         <motion.div whileTap={{ scale: 1.3 }} transition={{ type: "spring", stiffness: 400, damping: 15 }}>
           <Star
-            className={`h-4 w-4 transition-colors ${food.is_favorite ? "text-amber-400 fill-amber-400" : "text-zinc-200 hover:text-amber-300"}`}
+            className={`h-4 w-4 transition-colors ${food.is_favorite ? "text-amber-400 fill-amber-400" : "text-zinc-200 dark:text-zinc-700 hover:text-amber-300 dark:hover:text-amber-400"}`}
           />
         </motion.div>
       </button>
 
       <div className="flex-1 min-w-0">
-        <div className="font-medium text-zinc-800 text-sm truncate">{food.name}</div>
-        <div className="text-xs text-zinc-400 truncate">
+        <div className="font-medium text-zinc-800 dark:text-zinc-200 text-sm truncate">{food.name}</div>
+        <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
           {food.brand && <span className="mr-1.5">{food.brand} ·</span>}
           {food.serving_size}{food.serving_unit}
           {food.default_servings != null && food.default_servings > 0 && (
-            <span className="text-emerald-500"> · default {food.default_servings}{food.default_unit ?? food.serving_unit}</span>
+            <span className="text-emerald-500 dark:text-emerald-400"> · default {food.default_servings}{food.default_unit ?? food.serving_unit}</span>
           )}
           {" "}·{" "}
-          <span className="font-medium text-zinc-600">{Math.round(food.calories)} cal</span>
+          <span className="font-medium text-zinc-600 dark:text-zinc-400">{Math.round(food.calories)} cal</span>
           <span className="ml-1.5">P{food.protein}g C{food.carbs}g F{food.fat}g</span>
         </div>
       </div>
 
       <div className="flex gap-0.5 shrink-0">
         <Button variant="ghost" size="icon" onClick={onEdit} className="h-8 w-8">
-          <Pencil className="h-3.5 w-3.5 text-zinc-400" />
+          <Pencil className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
         </Button>
         <Button variant="ghost" size="icon" onClick={onDelete} className="h-8 w-8">
-          <Trash2 className="h-3.5 w-3.5 text-zinc-400" />
+          <Trash2 className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
         </Button>
       </div>
     </div>
@@ -287,8 +287,11 @@ function FoodForm({
     onSaved(saved);
   }
 
+  const inputClasses = "w-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow placeholder:text-zinc-400 dark:placeholder:text-zinc-500";
+  const selectClasses = "w-full min-w-0 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow";
+
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-zinc-200 shadow-sm p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="bg-white dark:bg-[--color-surface] rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm p-4 space-y-3">
       {!food && !scanned && (
         scanning ? (
           <div className="space-y-2">
@@ -304,12 +307,12 @@ function FoodForm({
         )
       )}
       {scanned && (
-        <div className="text-xs text-emerald-600 bg-emerald-50 rounded-xl px-3 py-2">
+        <div className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 rounded-xl px-3 py-2">
           Label scanned — review the info below and add a name.
         </div>
       )}
       <input
-        className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+        className={inputClasses}
         placeholder="Food name *"
         value={form.name}
         onChange={(e) => set("name", e.target.value)}
@@ -317,26 +320,26 @@ function FoodForm({
         autoFocus={scanned}
       />
       <input
-        className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+        className={inputClasses}
         placeholder="Brand"
         value={form.brand}
         onChange={(e) => set("brand", e.target.value)}
       />
       <div className="grid grid-cols-3 gap-2">
         <div>
-          <label className="block text-xs font-medium text-zinc-500 mb-1">Serving size</label>
+          <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Serving size</label>
           <input
             type="number" min="0.1" step="any"
-            className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            className={`min-w-0 ${inputClasses}`}
             value={form.serving_size}
             onFocus={(e) => e.target.select()}
             onChange={(e) => set("serving_size", parseFloat(e.target.value))}
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-zinc-500 mb-1">Unit</label>
+          <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Unit</label>
           <select
-            className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            className={`min-w-0 ${selectClasses}`}
             value={form.serving_unit}
             onChange={(e) => set("serving_unit", e.target.value)}
           >
@@ -346,10 +349,10 @@ function FoodForm({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-zinc-500 mb-1">Calories</label>
+          <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">Calories</label>
           <input
             type="number" min="0" step="any"
-            className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            className={`min-w-0 ${inputClasses}`}
             value={form.calories}
             onFocus={(e) => e.target.select()}
             onChange={(e) => set("calories", parseFloat(e.target.value))}
@@ -359,27 +362,27 @@ function FoodForm({
       </div>
       {form.serving_unit !== "g" && (
         <div>
-          <label className="block text-xs font-medium text-zinc-500 mb-1">
+          <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">
             Grams per serving — optional
           </label>
           <input
             type="number" min="0" step="any"
-            className="w-full border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            className={inputClasses}
             placeholder={`How many grams is ${form.serving_size} ${form.serving_unit}?`}
             value={form.serving_weight_grams}
             onFocus={(e) => e.target.select()}
             onChange={(e) => set("serving_weight_grams", e.target.value === "" ? "" : parseFloat(e.target.value))}
           />
-          <p className="text-[11px] text-zinc-400 mt-1">Enables logging by grams.</p>
+          <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">Enables logging by grams.</p>
         </div>
       )}
       <div className="grid grid-cols-3 gap-2">
         {(["protein", "carbs", "fat"] as const).map((m) => (
           <div key={m}>
-            <label className="block text-xs font-medium text-zinc-500 mb-1">{m.charAt(0).toUpperCase() + m.slice(1)} (g)</label>
+            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">{m.charAt(0).toUpperCase() + m.slice(1)} (g)</label>
             <input
               type="number" min="0" step="any"
-              className="w-full min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+              className={`min-w-0 ${inputClasses}`}
               value={form[m]}
               onFocus={(e) => e.target.select()}
               onChange={(e) => set(m, parseFloat(e.target.value) || 0)}
@@ -388,20 +391,20 @@ function FoodForm({
         ))}
       </div>
       <div>
-        <label className="block text-xs font-medium text-zinc-500 mb-1">
+        <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1">
           Default amount — optional
         </label>
         <div className="flex gap-2">
           <input
             type="number" min="0" step="any"
-            className="flex-1 min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            className={`flex-1 min-w-0 ${inputClasses}`}
             placeholder="e.g. 250"
             value={form.default_servings}
             onFocus={(e) => e.target.select()}
             onChange={(e) => set("default_servings", e.target.value === "" ? "" : parseFloat(e.target.value))}
           />
           <select
-            className="min-w-0 border border-zinc-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-shadow"
+            className={`min-w-0 ${selectClasses}`}
             value={form.default_unit}
             onChange={(e) => set("default_unit", e.target.value)}
           >
@@ -410,7 +413,7 @@ function FoodForm({
             ))}
           </select>
         </div>
-        <p className="text-[11px] text-zinc-400 mt-1">Pre-fills this amount when logging. Leave blank for 1 serving.</p>
+        <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-1">Pre-fills this amount when logging. Leave blank for 1 serving.</p>
       </div>
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>

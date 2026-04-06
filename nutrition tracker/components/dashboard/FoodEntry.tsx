@@ -52,18 +52,18 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
     >
       {/* Row 1: Name + Calories */}
       <div className="flex items-start justify-between gap-3">
-        <span className="font-semibold text-zinc-800 text-sm leading-snug">{foodName}</span>
-        <span className="font-semibold text-zinc-800 text-sm shrink-0">{Math.round(entry.calories)} cal</span>
+        <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-sm leading-snug">{foodName}</span>
+        <span className="font-semibold text-zinc-800 dark:text-zinc-200 text-sm shrink-0">{Math.round(entry.calories)} cal</span>
       </div>
 
       {/* Row 2: Serving info + Macros + Actions */}
       <div className="flex items-center justify-between gap-2">
-        <div className="text-xs text-zinc-400 min-w-0">
+        <div className="text-xs text-zinc-400 dark:text-zinc-500 min-w-0">
           {brand && <span>{brand} · </span>}
           {editing ? (
             <span className="inline-flex items-center gap-1">
               <input
-                className="w-14 border border-zinc-300 rounded-lg px-1.5 py-0.5 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-14 border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 rounded-lg px-1.5 py-0.5 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 value={servings}
                 onChange={(e) => setServings(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSave()}
@@ -86,7 +86,7 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
           {editing ? (
             <>
               <Button variant="ghost" size="icon" onClick={handleSave} className="h-7 w-7">
-                <Check className="h-3.5 w-3.5 text-emerald-600" />
+                <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
               </Button>
               <Button
                 variant="ghost"
@@ -94,16 +94,16 @@ export function FoodEntry({ entry, onDelete, onUpdate }: FoodEntryProps) {
                 onClick={() => { setServings(String(entry.servings)); setEditing(false); }}
                 className="h-7 w-7"
               >
-                <X className="h-3.5 w-3.5 text-zinc-400" />
+                <X className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" />
               </Button>
             </>
           ) : (
             <>
               <Button variant="ghost" size="icon" onClick={() => setEditing(true)} className="h-7 w-7">
-                <Pencil className="h-3 w-3 text-zinc-300" />
+                <Pencil className="h-3 w-3 text-zinc-300 dark:text-zinc-600" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => onDelete(entry.id)} className="h-7 w-7">
-                <Trash2 className="h-3 w-3 text-zinc-300" />
+                <Trash2 className="h-3 w-3 text-zinc-300 dark:text-zinc-600" />
               </Button>
             </>
           )}

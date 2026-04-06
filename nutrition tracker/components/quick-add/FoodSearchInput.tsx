@@ -56,16 +56,16 @@ export function FoodSearchInput({ onSelect }: FoodSearchInputProps) {
   return (
     <div>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500" />
         <input
-          className="w-full pl-9 pr-4 py-2.5 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+          className="w-full pl-9 pr-4 py-2.5 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
           placeholder="Search foods..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
         />
         {loading && (
-          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 animate-spin" />
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500 animate-spin" />
         )}
       </div>
 
@@ -74,28 +74,28 @@ export function FoodSearchInput({ onSelect }: FoodSearchInputProps) {
           {results.map((food, i) => (
             <button
               key={food.id ?? `${food.external_id}-${i}`}
-              className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-zinc-50 transition-colors group"
+              className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors group"
               onClick={() => onSelect(food)}
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-medium text-zinc-800 text-sm truncate">{food.name}</span>
+                    <span className="font-medium text-zinc-800 dark:text-zinc-200 text-sm truncate">{food.name}</span>
                     {food.is_favorite === 1 && <Star className="h-3 w-3 text-amber-400 fill-amber-400 shrink-0" />}
                   </div>
-                  <div className="text-xs text-zinc-400 truncate">
+                  <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
                     {food.brand && <span className="mr-1.5">{food.brand} ·</span>}
                     {food.serving_size}{food.serving_unit}
                     {food.source && !food._cached && (
-                      <span className="ml-1.5 uppercase text-[10px] font-medium text-zinc-300">
+                      <span className="ml-1.5 uppercase text-[10px] font-medium text-zinc-300 dark:text-zinc-600">
                         {food.source}
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="font-semibold text-zinc-700 text-sm">{Math.round(food.calories)} cal</div>
-                  <div className="text-[11px] text-zinc-400">
+                  <div className="font-semibold text-zinc-700 dark:text-zinc-300 text-sm">{Math.round(food.calories)} cal</div>
+                  <div className="text-[11px] text-zinc-400 dark:text-zinc-500">
                     P{Math.round(food.protein)} C{Math.round(food.carbs)} F{Math.round(food.fat)}
                   </div>
                 </div>
@@ -106,7 +106,7 @@ export function FoodSearchInput({ onSelect }: FoodSearchInputProps) {
       )}
 
       {query.trim() && !loading && results.length === 0 && (
-        <div className="mt-8 text-center text-sm text-zinc-400">No results for &ldquo;{query}&rdquo;</div>
+        <div className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">No results for &ldquo;{query}&rdquo;</div>
       )}
     </div>
   );

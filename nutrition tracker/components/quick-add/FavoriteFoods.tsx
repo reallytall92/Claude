@@ -29,14 +29,14 @@ export function FavoriteFoods({ onSelect }: FavoriteFoodsProps) {
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="h-5 w-5 text-zinc-400 animate-spin" />
+        <Loader2 className="h-5 w-5 text-zinc-400 dark:text-zinc-500 animate-spin" />
       </div>
     );
   }
 
   if (favorites.length === 0) {
     return (
-      <div className="mt-8 text-center text-sm text-zinc-400">
+      <div className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
         No favorites yet — star a food in your Food Library to save it here.
       </div>
     );
@@ -47,23 +47,23 @@ export function FavoriteFoods({ onSelect }: FavoriteFoodsProps) {
       {favorites.map((food) => (
         <button
           key={food.id}
-          className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-zinc-50 transition-colors"
+          className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
           onClick={() => onSelect(food)}
         >
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
                 <Star className="h-3 w-3 text-amber-400 fill-amber-400 shrink-0" />
-                <span className="font-medium text-zinc-800 text-sm truncate">{food.name}</span>
+                <span className="font-medium text-zinc-800 dark:text-zinc-200 text-sm truncate">{food.name}</span>
               </div>
-              <div className="text-xs text-zinc-400 truncate">
+              <div className="text-xs text-zinc-400 dark:text-zinc-500 truncate">
                 {food.brand && <span className="mr-1.5">{food.brand} ·</span>}
                 {food.serving_size}{food.serving_unit}
               </div>
             </div>
             <div className="text-right shrink-0">
-              <div className="font-semibold text-zinc-700 text-sm">{Math.round(food.calories)} cal</div>
-              <div className="text-[11px] text-zinc-400">
+              <div className="font-semibold text-zinc-700 dark:text-zinc-300 text-sm">{Math.round(food.calories)} cal</div>
+              <div className="text-[11px] text-zinc-400 dark:text-zinc-500">
                 P{Math.round(food.protein)} C{Math.round(food.carbs)} F{Math.round(food.fat)}
               </div>
             </div>

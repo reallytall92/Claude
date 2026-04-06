@@ -57,8 +57,8 @@ export function DayHeader({ date, onPrev, onNext }: DayHeaderProps) {
           exit={{ opacity: 0, x: directionRef.current * -24 }}
           transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
         >
-          <div className="font-bold text-zinc-900 text-base leading-tight">{label}</div>
-          <div className="text-xs text-zinc-400 font-medium mt-0.5">{sub}</div>
+          <div className="font-bold text-zinc-900 dark:text-zinc-100 text-base leading-tight">{label}</div>
+          <div className="text-xs text-zinc-400 dark:text-zinc-500 font-medium mt-0.5">{sub}</div>
         </motion.div>
       </AnimatePresence>
 
